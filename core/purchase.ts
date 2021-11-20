@@ -34,66 +34,6 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
   }
 }
 
-async function sendNotificationLINK(data: eventPurchase, http: any) {
-  try {
-    let constructEvent: eventForTelegram = {
-      size: data.contractSize,
-      pair: `LINK/DAI`
-    }
-    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
-    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
-    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
-    constructEvent.strikePrice = fixedToNumber(strike64x64);
-    await http.get(
-      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
-    )
-    await http.post(
-      envConfig.discordWebHookUrl,
-      {
-        headers:{
-          'Content-type': 'application/json'
-        },
-        username: "Premia-Insights",
-        avatar_url: "",
-        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
-      }
-    )
-  } catch (e) {
-    console.log(e);
-  }
-}
-
-async function sendNotificationBTC(data: eventPurchase, http: any) {
-  try {
-    let constructEvent: eventForTelegram = {
-      size: data.contractSize,
-      pair: `WBTC/DAI`
-    }
-    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
-    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
-    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
-    constructEvent.strikePrice = fixedToNumber(strike64x64);
-    await http.get(
-      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size.toLocaleString()} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
-    )
-    await http.post(
-      envConfig.discordWebHookUrl,
-      {
-        headers: {
-          'Content-type': 'application/json'
-        },
-        username: "Premia-Insights",
-        avatar_url: "",
-        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size.toLocaleString()} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
-      }
-    )
-  } catch (e) {
-    console.log(e);
-  }
-}
-
-
-
 export function startPurchase(web3: any, http: any, wethDai: any, linkDai: any, wbtcDai: any) {
   [
     {pool: wethDai, pair: 'WETH/DAI'},
