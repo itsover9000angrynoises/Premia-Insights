@@ -1,9 +1,8 @@
-import { eventPurchase, eventForTelegram } from "../models/models";
-import { fixedToNumber } from '@premia/utils'
-import { BigNumber } from 'ethers';
+import { eventForTelegram, eventPurchase } from "../models/models";
+import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
 import { bnToNumber, bnToNumberBTC, endpoint } from "../utils/utils";
 import { envConfig } from "../config/env";
-
+import {BigNumber} from "ethers";
 
 
 let poolViewContract: any;
@@ -13,10 +12,10 @@ async function sendNotificationETH(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `WETH/DAI`
     }
-    const getDecoded = await poolViewContract.methods.getParametersForTokenId(data.longTokenId).call()
-    constructEvent.type = getDecoded[`0`] === `4` ? `long Call` : getDecoded[`0`] === `6` ? `long Put` : `Not Supported`
-    constructEvent.maturity = new Date(getDecoded[`1`] * 1000).toDateString();
-    constructEvent.strikePrice = fixedToNumber(BigNumber.from(getDecoded[`2`]));
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
+    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+    constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
       `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
     )
@@ -42,10 +41,10 @@ async function sendNotificationLINK(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `LINK/DAI`
     }
-    const getDecoded = await poolViewContract.methods.getParametersForTokenId(data.longTokenId).call()
-    constructEvent.type = getDecoded[`0`] === `4` ? `long Call` : getDecoded[`0`] === `6` ? `long Put` : `Not Supported`
-    constructEvent.maturity = new Date(getDecoded[`1`] * 1000).toDateString();
-    constructEvent.strikePrice = fixedToNumber(BigNumber.from(getDecoded[`2`]));
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
+    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+    constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
       `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
     )
@@ -71,10 +70,10 @@ async function sendNotificationBTC(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `WBTC/DAI`
     }
-    const getDecoded = await poolViewContract.methods.getParametersForTokenId(data.longTokenId).call()
-    constructEvent.type = getDecoded[`0`] === `4` ? `long Call` : getDecoded[`0`] === `6` ? `long Put` : `Not Supported`
-    constructEvent.maturity = new Date(getDecoded[`1`] * 1000).toDateString();
-    constructEvent.strikePrice = fixedToNumber(BigNumber.from(getDecoded[`2`]));
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
+    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+    constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
       `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size.toLocaleString()} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
     )
