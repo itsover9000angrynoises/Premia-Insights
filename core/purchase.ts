@@ -2,6 +2,7 @@ import { eventForTelegram, eventPurchase } from "../models/models";
 import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
 import { bnToNumber, bnToNumberBTC, endpoint } from "../utils/utils";
 import { envConfig } from "../config/env";
+import {BigNumber} from "ethers";
 
 
 let poolViewContract: any;
@@ -11,7 +12,7 @@ async function sendNotificationETH(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `WETH/DAI`
     }
-    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
@@ -40,7 +41,7 @@ async function sendNotificationLINK(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `LINK/DAI`
     }
-    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
@@ -69,7 +70,7 @@ async function sendNotificationBTC(data: eventPurchase, http: any) {
       size: data.contractSize,
       pair: `WBTC/DAI`
     }
-    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
