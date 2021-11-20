@@ -2,6 +2,7 @@ import { eventForTelegram, eventPurchase } from "../models/models";
 import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
 import { bnToNumber, bnToNumberBTC, endpoint } from "../utils/utils";
 import { envConfig } from "../config/env";
+import {BigNumber} from "ethers";
 
 
 let poolViewContract: any;
@@ -10,6 +11,35 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
     let constructEvent: eventForTelegram = {
       size: data.contractSize,
       pair
+    }
+    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
+    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+    constructEvent.strikePrice = fixedToNumber(strike64x64);
+    await http.get(
+      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+    )
+    await http.post(
+      envConfig.discordWebHookUrl,
+      {
+        headers:{
+          'Content-type': 'application/json'
+        },
+        username: "Premia-Insights",
+        avatar_url: "",
+        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+      }
+    )
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+async function sendNotificationLINK(data: eventPurchase, http: any) {
+  try {
+    let constructEvent: eventForTelegram = {
+      size: data.contractSize,
+      pair: `LINK/DAI`
     }
     const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
@@ -33,6 +63,37 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
     console.log(e);
   }
 }
+
+async function sendNotificationBTC(data: eventPurchase, http: any) {
+  try {
+    let constructEvent: eventForTelegram = {
+      size: data.contractSize,
+      pair: `WBTC/DAI`
+    }
+    const {tokenType, maturity, strike64x64} = parseTokenId(data.longTokenId);
+    constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+    constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+    constructEvent.strikePrice = fixedToNumber(strike64x64);
+    await http.get(
+      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size.toLocaleString()} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+    )
+    await http.post(
+      envConfig.discordWebHookUrl,
+      {
+        headers: {
+          'Content-type': 'application/json'
+        },
+        username: "Premia-Insights",
+        avatar_url: "",
+        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size.toLocaleString()} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+      }
+    )
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+
 
 export function startPurchase(web3: any, http: any, wethDai: any, linkDai: any, wbtcDai: any) {
   const poolView = '0x14AC2DA11C2CF07eA4c64C83BE108b8F11e48F20'
