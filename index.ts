@@ -2,6 +2,7 @@ var Web3 = require("web3");
 import axios from 'axios';
 import { diamondProxyABI, envConfig, linkDaiAddress, wbtcDaiAddress, wethDaiAddress } from './config/env';
 import { startDeposit } from './core/deposit';
+import { startExercise } from './core/exercise';
 import { startPurchase } from './core/purchase';
 import { startWithdrawal } from './core/withdraw';
 var rateLimit = require('axios-rate-limit');
@@ -65,9 +66,10 @@ const linkDai = new web3.eth.Contract(diamondProxyABI,
 
 
 function start() {
-  startPurchase(web3, http, wethDai, linkDai, wbtcDai);
-  startDeposit(web3, http, wethDai, linkDai, wbtcDai);
-  startWithdrawal(web3, http, wethDai, linkDai, wbtcDai);
+  startExercise(http, wethDai, linkDai, wbtcDai);
+  startDeposit(http, wethDai, linkDai, wbtcDai);
+  startPurchase(http, wethDai, linkDai, wbtcDai);
+  startWithdrawal(http, wethDai, linkDai, wbtcDai);
 };
 
 

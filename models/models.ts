@@ -7,12 +7,22 @@ export type eventPurchase = {
   newPrice64x64: string
 }
 
+export type eventExercise = {
+  user: string,
+  longTokenId: string,
+  contractSize:number,
+  exerciseValue:string,
+  fee:string,
+}
+
 export type eventForTelegram = {
-  size: number,
+  size: number|string,
   pair?: string,
   type?: string,
   maturity?: string,
-  strikePrice?: number
+  strikePrice?: number,
+  fees?:number|string,
+  exerciseValue?:number,
 }
 
 export type eventDeposit = {

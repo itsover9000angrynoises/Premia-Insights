@@ -1,15 +1,14 @@
 import { envConfig } from "../config/env";
 import { eventDeposit } from "../models/models";
-import {bnToNumber, bnToNumberBTC, endpoint } from "../utils/utils";
+import {bnToNumber, bnToNumberBTC, endpoint, roundTo5 } from "../utils/utils";
 
 
 
-
-async function sendDepositNotificationETH(data: eventDeposit, http: any) {
+async function sendDepositNotification(data: eventDeposit, http: any, pair: string) {
   try {
-    const unit = data.type == 'Call' ? 'WETH' : 'DAI'
+    const unit = data.type == 'Call' ? pair.split("/")[0] : 'DAI'
     await http.get(
-      `${endpoint}New Deposit WETH : ${data.type} Pool amount: ${data.amount} ${unit}`
+      `${endpoint}New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`
     )
     await http.post(
       envConfig.discordWebHookUrl,
@@ -19,49 +18,7 @@ async function sendDepositNotificationETH(data: eventDeposit, http: any) {
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `New Deposit WETH : ${data.type} Pool amount: ${data.amount} ${unit}`
-      }
-    )
-  } catch (e) {
-    console.log(e);
-  }
-}
-async function sendDepositNotificationBTC(data: eventDeposit, http: any) {
-  try {
-    const unit = data.type == 'Call' ? 'WBTC' : 'DAI'
-    await http.get(
-      `${endpoint}New Deposit WBTC : ${data.type} Pool amount: ${data.amount} ${unit}`
-    )
-    await http.post(
-      envConfig.discordWebHookUrl,
-      {
-        headers:{
-          'Content-type': 'application/json'
-        },
-        username: "Premia-Insights",
-        avatar_url: "",
-        content: `New Deposit WBTC : ${data.type} Pool amount: ${data.amount} ${unit}`
-      }
-    )
-  } catch (e) {
-    console.log(e);
-  }
-}
-async function sendDepositNotificationLINK(data: eventDeposit, http: any) {
-  try {
-    const unit = data.type == 'Call' ? 'LINK' : 'DAI'
-    await http.get(
-      `${endpoint}New Deposit LINK : ${data.type} Pool amount: ${data.amount} ${unit}`
-    )
-    await http.post(
-      envConfig.discordWebHookUrl,
-      {
-        headers:{
-          'Content-type': 'application/json'
-        },
-        username: "Premia-Insights",
-        avatar_url: "",
-        content: `New Deposit LINK : ${data.type} Pool amount: ${data.amount} ${unit}`
+        content: `New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`
       }
     )
   } catch (e) {
@@ -69,52 +26,27 @@ async function sendDepositNotificationLINK(data: eventDeposit, http: any) {
   }
 }
 
-export function startDeposit(web3: any, http: any, wethDai: any, linkDai: any, wbtcDai: any) {
-  wethDai.events.Deposit({
-    filter: {
-      value: [],
-    },
-    fromBlock: envConfig.startBlocKHeight
-  }).on('data', event => {
-    let eventData: eventDeposit = {
-      type: event.returnValues[`1`] == true ? 'Call' : 'Put',
-      amount: bnToNumber(event.returnValues[`2`])
-    }
-    sendDepositNotificationETH(eventData, http);
-  })
-    .on('changed', changed => console.log(changed))
-    .on('error', err => console.log(err))
-    .on('connected', str => console.log(str))
 
-  linkDai.events.Deposit({
-    filter: {
-      value: [],
-    },
-    fromBlock: envConfig.startBlocKHeight
-  }).on('data', event => {
-    let eventData: eventDeposit = {
-      type: event.returnValues[`1`] == true ? 'Call' : 'Put',
-      amount: bnToNumber(event.returnValues[`2`])
-    }
-    sendDepositNotificationLINK(eventData, http);
+export function startDeposit(http: any, wethDai: any, linkDai: any, wbtcDai: any) {
+  [
+    {pool: wethDai, pair: 'WETH/DAI'},
+    {pool: linkDai, pair: 'LINK/DAI'},
+    {pool: wbtcDai, pair: 'WBTC/DAI'}
+  ].forEach(el => {
+    el.pool.events.Deposit({
+      filter: {
+        value: [],
+      },
+      fromBlock: envConfig.startBlocKHeight
+    }).on('data', event => {
+      let eventData: eventDeposit = {
+        type: event.returnValues[`1`] == true ? 'Call' : 'Put',
+        amount: el.pair === 'WBTC/DAI' ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`]),
+      }
+      sendDepositNotification(eventData, http, el.pair);
+    })
+      .on('changed', changed => console.log(changed))
+      .on('error', err => console.log(err))
+      .on('connected', str => console.log(str))
   })
-    .on('changed', changed => console.log(changed))
-    .on('error', err => console.log(err))
-    .on('connected', str => console.log(str))
-
-  wbtcDai.events.Deposit({
-    filter: {
-      value: [],
-    },
-    fromBlock: envConfig.startBlocKHeight
-  }).on('data', event => {
-    let eventData: eventDeposit = {
-      type: event.returnValues[`1`] == true ? 'Call' : 'Put',
-      amount: event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`])
-    }
-    sendDepositNotificationBTC(eventData, http);
-  })
-    .on('changed', changed => console.log(changed))
-    .on('error', err => console.log(err))
-    .on('connected', str => console.log(str))
 }

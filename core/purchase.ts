@@ -34,7 +34,7 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
   }
 }
 
-export function startPurchase(web3: any, http: any, wethDai: any, linkDai: any, wbtcDai: any) {
+export function startPurchase(http: any, wethDai: any, linkDai: any, wbtcDai: any) {
   [
     {pool: wethDai, pair: 'WETH/DAI'},
     {pool: linkDai, pair: 'LINK/DAI'},
