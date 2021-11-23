@@ -41,7 +41,7 @@ export function startDeposit(http: any, wethDai: any, linkDai: any, wbtcDai: any
     }).on('data', event => {
       let eventData: eventDeposit = {
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
-        amount: el.pair === 'WBTC/DAI' ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`]),
+        amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`]),
       }
       sendDepositNotification(eventData, http, el.pair);
     })

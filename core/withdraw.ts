@@ -40,7 +40,7 @@ export function startWithdrawal(http: any, wethDai: any, linkDai: any, wbtcDai: 
     }).on('data', event => {
       let eventData: eventWithdrawal = {
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
-        amount: el.pair === 'WBTC/DAI' ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`]),
+        amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`])
       }
       sendDepositNotification(eventData, http, el.pair);
     })
