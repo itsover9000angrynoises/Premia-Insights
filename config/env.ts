@@ -1,5 +1,6 @@
 export const envConfig = {
-  WSSEndpoint: process.env.WSSEndpoint,
+  WSSEndpoint: process.env.ETHWSSEndpoint,
+  arbiWSSEndpoint: process.env.ArbiWSSEndpoint,
   telegramChannelName : process.env.TelegramChannelName,
   telegramBotApiKey : process.env.TelegramBotApiKey,
   discordWebHookUrl : process.env.DiscordWebHookUrl,

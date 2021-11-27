@@ -1,15 +1,13 @@
 var Web3 = require("web3");
-import axios from 'axios';
 import { diamondProxyABI, envConfig, linkDaiAddress, wbtcDaiAddress, wethDaiAddress } from './config/env';
 import { startDeposit } from './core/deposit';
 import { startExercise } from './core/exercise';
 import { startPurchase } from './core/purchase';
 import { startWithdrawal } from './core/withdraw';
-var rateLimit = require('axios-rate-limit');
+import { ethContractInstance } from './models/models';
 
-const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 5000 });
 
-var getProvider = () => {
+var getETHProvider = () => {
   const provider = new Web3.providers.WebsocketProvider(envConfig.WSSEndpoint, {
     // @ts-ignore
     clientConfig: {
@@ -28,23 +26,23 @@ var getProvider = () => {
   })
   provider.on("error", (e) => {
     console.log("*** WebSocket Error ***")
-    getProvider()
+    getETHProvider()
   })
   provider.on("end", (e) => {
     console.log("*** WebSocket Ended ***")
-    getProvider()
+    getETHProvider()
   })
   provider.on("close", (e) => {
     console.log("*** WebSocket Closed ***")
-    getProvider()
+    getETHProvider()
   })
   provider.on("timeout", (e) => {
     console.log("*** WebSocket Timeout ***")
-    getProvider()
+    getETHProvider()
   })
   provider.on("exit", (e) => {
     console.log("*** WebSocket Exit ***")
-    getProvider()
+    getETHProvider()
   })
   provider.on("ready", (e) => {
     //console.log('*** WebSocket Ready ***')
@@ -52,24 +50,26 @@ var getProvider = () => {
   return provider
 }
 
-var web3 = new Web3(getProvider())
+var web3 = new Web3(getETHProvider())
+const ethInstance: ethContractInstance = {
 
-const wethDai = new web3.eth.Contract(diamondProxyABI,
-  wethDaiAddress
-);
-const wbtcDai = new web3.eth.Contract(diamondProxyABI,
-  wbtcDaiAddress
-);
-const linkDai = new web3.eth.Contract(diamondProxyABI,
-  linkDaiAddress
-);
+  wethDai : new web3.eth.Contract(diamondProxyABI,
+    wethDaiAddress
+  ),
+  wbtcDai : new web3.eth.Contract(diamondProxyABI,
+    wbtcDaiAddress
+  ),
+  linkDai : new web3.eth.Contract(diamondProxyABI,
+    linkDaiAddress
+  ),
+}
 
 
 function start() {
-  startExercise(http, wethDai, linkDai, wbtcDai);
-  startDeposit(http, wethDai, linkDai, wbtcDai);
-  startPurchase(http, wethDai, linkDai, wbtcDai);
-  startWithdrawal(http, wethDai, linkDai, wbtcDai);
+  startExercise(ethInstance);
+  startDeposit(ethInstance);
+  startPurchase(ethInstance);
+  startWithdrawal(ethInstance);
 };
 
 

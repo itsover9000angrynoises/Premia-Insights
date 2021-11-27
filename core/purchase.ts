@@ -1,11 +1,11 @@
-import { eventForTelegram, eventPurchase } from "../models/models";
+import { ethContractInstance, eventForTelegram, eventPurchase } from "../models/models";
 import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
-import { bnToNumber, bnToNumberBTC, endpoint } from "../utils/utils";
+import { bnToNumber, bnToNumberBTC, endpoint, etherScanTx, http } from "../utils/utils";
 import { envConfig } from "../config/env";
 import {BigNumber} from "ethers";
 
 
-async function sendPurchaseNotification(data: eventPurchase, http: any, pair: string) {
+async function sendPurchaseNotification(data: eventPurchase, pair: string) {
   try {
     let constructEvent: eventForTelegram = {
       size: data.contractSize,
@@ -16,7 +16,7 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
-      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${etherScanTx}${data.txHash}`
     )
     await http.post(
       envConfig.discordWebHookUrl,
@@ -26,7 +26,11 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`
+        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`,
+        embeds: [{
+          "title": "TxHash",
+          "url": `${etherScanTx}${data.txHash}`
+        }]
       }
     )
   } catch (e) {
@@ -34,11 +38,11 @@ async function sendPurchaseNotification(data: eventPurchase, http: any, pair: st
   }
 }
 
-export function startPurchase(http: any, wethDai: any, linkDai: any, wbtcDai: any) {
+export function startPurchase(ethInstance: ethContractInstance) {
   [
-    {pool: wethDai, pair: 'WETH/DAI'},
-    {pool: linkDai, pair: 'LINK/DAI'},
-    {pool: wbtcDai, pair: 'WBTC/DAI'}
+    { pool: ethInstance.wethDai, pair: 'WETH/DAI' },
+    { pool: ethInstance.linkDai, pair: 'LINK/DAI' },
+    { pool: ethInstance.wbtcDai, pair: 'WBTC/DAI' }
   ].forEach(el => {
     el.pool.events.Purchase({
       filter: {
@@ -47,6 +51,7 @@ export function startPurchase(http: any, wethDai: any, linkDai: any, wbtcDai: an
       fromBlock: envConfig.startBlocKHeight
     }).on('data', event => {
       let eventData: eventPurchase = {
+        txHash: event.transactionHash,
         account: event.returnValues[`0`],
         longTokenId: event.returnValues[`1`],
         contractSize: el.pair === 'WBTC/DAI' ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`]),
@@ -54,7 +59,7 @@ export function startPurchase(http: any, wethDai: any, linkDai: any, wbtcDai: an
         feeCost: event.returnValues[`4`],
         newPrice64x64: event.returnValues[`5`]
       }
-      sendPurchaseNotification(eventData, http, el.pair);
+      sendPurchaseNotification(eventData, el.pair);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
