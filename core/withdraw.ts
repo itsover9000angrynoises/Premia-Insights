@@ -1,13 +1,13 @@
 import { envConfig } from "../config/env";
-import { ethContractInstance, eventWithdrawal } from "../models/models";
-import { bnToNumber, bnToNumberBTC, endpoint, etherScanTx, http, roundTo5 } from "../utils/utils";
+import { arbiContractInstance, ethContractInstance, eventWithdrawal } from "../models/models";
+import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
 
 
-async function sendDepositNotification(data: eventWithdrawal, pair: string) {
+async function sendDepositNotification(data: eventWithdrawal, pair: string, network : string) {
   try {
     const unit = data.type == 'Call' ? pair.split("/")[0] : 'DAI'
     await http.get(
-      `${endpoint}New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} txHash:${etherScanTx}${data.txHash}`
+      `${endpoint}${network} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
     )
     await http.post(
       envConfig.discordWebHookUrl,
@@ -17,10 +17,10 @@ async function sendDepositNotification(data: eventWithdrawal, pair: string) {
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`,
+        content: `${network} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`,
         embeds: [{
           "title": "TxHash",
-          "url": `${etherScanTx}${data.txHash}`
+          "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
         }]
       }
     )
@@ -30,7 +30,7 @@ async function sendDepositNotification(data: eventWithdrawal, pair: string) {
 }
 
 
-export function startWithdrawal(ethInstance:ethContractInstance){
+export function startWithdrawal(ethInstance:ethContractInstance, arbiInstance: arbiContractInstance){
   [
     { pool: ethInstance.wethDai, pair: 'WETH/DAI' },
     { pool: ethInstance.linkDai, pair: 'LINK/DAI' },
@@ -40,14 +40,36 @@ export function startWithdrawal(ethInstance:ethContractInstance){
       filter: {
         value: [],
       },
-      fromBlock: envConfig.startBlocKHeight
+      fromBlock: envConfig.startBlocKHeightEth
     }).on('data', event => {
       let eventData: eventWithdrawal = {
         txHash: event.transactionHash,
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
         amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`])
       }
-      sendDepositNotification(eventData, el.pair);
+      sendDepositNotification(eventData, el.pair,ethMainnet);
+    })
+      .on('changed', changed => console.log(changed))
+      .on('error', err => console.log(err))
+      .on('connected', str => console.log(str))
+  });
+  [
+    { pool: arbiInstance.wethDai, pair: 'WETH/DAI' },
+    { pool: arbiInstance.linkDai, pair: 'LINK/DAI' },
+    { pool: arbiInstance.wbtcDai, pair: 'WBTC/DAI' }
+  ].forEach(el => {
+    el.pool.events.Withdrawal({
+      filter: {
+        value: [],
+      },
+      fromBlock: envConfig.startBlocKHeightArbi
+    }).on('data', event => {
+      let eventData: eventWithdrawal = {
+        txHash: event.transactionHash,
+        type: event.returnValues[`1`] == true ? 'Call' : 'Put',
+        amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`])
+      }
+      sendDepositNotification(eventData, el.pair,arbiMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))

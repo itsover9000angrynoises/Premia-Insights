@@ -16,5 +16,6 @@ export function roundTo5(number: number) {
 }
 export const etherScanTx = 'https://etherscan.io/tx/';
 export const arbiScanTx = 'https://arbiscan.io/tx/';
-
+export const ethMainnet: string = 'ETH-MAINNET';
+export const arbiMainnet: string = 'ARBITRUM-MAINNET'
 export const endpoint = `https://api.telegram.org/bot${envConfig.telegramBotApiKey}/sendMessage?chat_id=${envConfig.telegramChannelName}&text=`

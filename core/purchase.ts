@@ -1,11 +1,11 @@
-import { ethContractInstance, eventForTelegram, eventPurchase } from "../models/models";
+import { arbiContractInstance, ethContractInstance, eventForTelegram, eventPurchase } from "../models/models";
 import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
-import { bnToNumber, bnToNumberBTC, endpoint, etherScanTx, http } from "../utils/utils";
+import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
 import { envConfig } from "../config/env";
 import {BigNumber} from "ethers";
 
 
-async function sendPurchaseNotification(data: eventPurchase, pair: string) {
+async function sendPurchaseNotification(data: eventPurchase, pair: string, network:string) {
   try {
     let constructEvent: eventForTelegram = {
       size: data.contractSize,
@@ -16,7 +16,7 @@ async function sendPurchaseNotification(data: eventPurchase, pair: string) {
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
-      `${endpoint}New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${etherScanTx}${data.txHash}`
+      `${endpoint}${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
     )
     await http.post(
       envConfig.discordWebHookUrl,
@@ -26,10 +26,10 @@ async function sendPurchaseNotification(data: eventPurchase, pair: string) {
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`,
+        content: `${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`,
         embeds: [{
           "title": "TxHash",
-          "url": `${etherScanTx}${data.txHash}`
+          "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
         }]
       }
     )
@@ -38,7 +38,7 @@ async function sendPurchaseNotification(data: eventPurchase, pair: string) {
   }
 }
 
-export function startPurchase(ethInstance: ethContractInstance) {
+export function startPurchase(ethInstance: ethContractInstance, arbiInstance: arbiContractInstance) {
   [
     { pool: ethInstance.wethDai, pair: 'WETH/DAI' },
     { pool: ethInstance.linkDai, pair: 'LINK/DAI' },
@@ -48,7 +48,7 @@ export function startPurchase(ethInstance: ethContractInstance) {
       filter: {
         value: [],
       },
-      fromBlock: envConfig.startBlocKHeight
+      fromBlock: envConfig.startBlocKHeightEth
     }).on('data', event => {
       let eventData: eventPurchase = {
         txHash: event.transactionHash,
@@ -59,7 +59,33 @@ export function startPurchase(ethInstance: ethContractInstance) {
         feeCost: event.returnValues[`4`],
         newPrice64x64: event.returnValues[`5`]
       }
-      sendPurchaseNotification(eventData, el.pair);
+      sendPurchaseNotification(eventData, el.pair,ethMainnet);
+    })
+      .on('changed', changed => console.log(changed))
+      .on('error', err => console.log(err))
+      .on('connected', str => console.log(str))
+  });
+  [
+    { pool: arbiInstance.wethDai, pair: 'WETH/DAI' },
+    { pool: arbiInstance.linkDai, pair: 'LINK/DAI' },
+    { pool: arbiInstance.wbtcDai, pair: 'WBTC/DAI' }
+  ].forEach(el => {
+    el.pool.events.Purchase({
+      filter: {
+        value: [],
+      },
+      fromBlock: envConfig.startBlocKHeightArbi
+    }).on('data', event => {
+      let eventData: eventPurchase = {
+        txHash: event.transactionHash,
+        account: event.returnValues[`0`],
+        longTokenId: event.returnValues[`1`],
+        contractSize: el.pair === 'WBTC/DAI' ? bnToNumberBTC(event.returnValues[`2`]) : bnToNumber(event.returnValues[`2`]),
+        baseCost: event.returnValues[`3`],
+        feeCost: event.returnValues[`4`],
+        newPrice64x64: event.returnValues[`5`]
+      }
+      sendPurchaseNotification(eventData, el.pair,arbiMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
