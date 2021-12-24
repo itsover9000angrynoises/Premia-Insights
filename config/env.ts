@@ -1,12 +1,14 @@
 export const envConfig = {
   WSSEndpoint: process.env.ETHWSSEndpoint,
   arbiWSSEndpoint: process.env.ArbiWSSEndpoint,
+  httpEndpoint: process.env.ETHHTTPEndpoint,
   telegramChannelName : process.env.TelegramChannelName,
   telegramBotApiKey : process.env.TelegramBotApiKey,
   discordWebHookUrl : process.env.DiscordWebHookUrl,
   startBlocKHeightEth: process.env.StartBlockHeightETH,
   startBlocKHeightArbi: process.env.StartBlockHeightArbi,
-
+  filterPrice: process.env.FilterPrice,
+  filterSizePrice: process.env.FilterSizePrice,
 }
 
 export const wethDaiAddress = '0xa4492fcDa2520cB68657d220f4D4aE3116359C10';

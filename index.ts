@@ -69,23 +69,23 @@ var getArbiProvider = () => {
   })
   provider.on("error", (e) => {
     console.log("*** WebSocket Error ***")
-    getETHProvider()
+    getArbiProvider()
   })
   provider.on("end", (e) => {
     console.log("*** WebSocket Ended ***")
-    getETHProvider()
+    getArbiProvider()
   })
   provider.on("close", (e) => {
     console.log("*** WebSocket Closed ***")
-    getETHProvider()
+    getArbiProvider()
   })
   provider.on("timeout", (e) => {
     console.log("*** WebSocket Timeout ***")
-    getETHProvider()
+    getArbiProvider()
   })
   provider.on("exit", (e) => {
     console.log("*** WebSocket Exit ***")
-    getETHProvider()
+    getArbiProvider()
   })
   provider.on("ready", (e) => {
     //console.log('*** WebSocket Ready ***')

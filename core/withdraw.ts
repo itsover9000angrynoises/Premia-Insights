@@ -1,14 +1,57 @@
 import { envConfig } from "../config/env";
 import { arbiContractInstance, ethContractInstance, eventWithdrawal } from "../models/models";
-import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
+import {bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet, arbiColor, ethColor } from "../utils/utils";
+import { getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice } from "./chainlink-price";
 
-
-async function sendDepositNotification(data: eventWithdrawal, pair: string, network : string) {
+async function sendWithdrawNotification(data: eventWithdrawal, pair: string, network : string) {
   try {
     const unit = data.type == 'Call' ? pair.split("/")[0] : 'DAI'
     await http.get(
       `${endpoint}${network} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
     )
+    let content;
+    let networkColor = network == ethMainnet ? ethColor: arbiColor; 
+    switch(unit){
+      case "WBTC" :{
+        const priceNow = roundTo5((await getWbtcPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :expressionless:)`;
+        }else{
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "WETH" :{
+        const priceNow = roundTo5((await getEthPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :expressionless:)`;
+        }else{
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "LINK" :{
+        const priceNow = roundTo5((await getLinkPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :expressionless:)`;
+        }else{
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "DAI" :{
+        const priceNow = roundTo5((await getDAIPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :expressionless:)`;
+        }else{
+          content=`${networkColor} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      default :{
+        console.log("not supported unit", unit);
+      }
+    }
     await http.post(
       envConfig.discordWebHookUrl,
       {
@@ -17,7 +60,7 @@ async function sendDepositNotification(data: eventWithdrawal, pair: string, netw
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `${network} New Withdrawal ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`,
+        content: content,
         embeds: [{
           "title": "TxHash",
           "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
@@ -47,7 +90,7 @@ export function startWithdrawal(ethInstance:ethContractInstance, arbiInstance: a
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
         amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`])
       }
-      sendDepositNotification(eventData, el.pair,ethMainnet);
+      sendWithdrawNotification(eventData, el.pair,ethMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
@@ -69,7 +112,7 @@ export function startWithdrawal(ethInstance:ethContractInstance, arbiInstance: a
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
         amount: el.pair === 'WBTC/DAI' && event.returnValues[`1`] == true ? bnToNumberBTC(event.returnValues[`3`]) : bnToNumber(event.returnValues[`3`])
       }
-      sendDepositNotification(eventData, el.pair,arbiMainnet);
+      sendWithdrawNotification(eventData, el.pair,arbiMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))

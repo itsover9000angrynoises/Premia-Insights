@@ -1,26 +1,61 @@
 import { parseTokenId, TokenType } from "@premia/utils";
 import { envConfig } from "../config/env";
 import { arbiContractInstance, ethContractInstance, eventExercise, eventForTelegram } from "../models/models";
-import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
+import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet, arbiColor, ethColor } from "../utils/utils";
+import { getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice } from "./chainlink-price";
 import { BigNumber } from "ethers";
 
 
 
-async function sendExerciseNotification(data: eventExercise, pair: string, network:string) {
+async function sendExerciseNotification(data: eventExercise, pair: string, network: string) {
   try {
     let constructEvent: eventForTelegram = {
-      size: data.contractSize,
+      size: roundTo5(data.contractSize),
       pair
     }
     const { tokenType } = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.fees = pair.split("/")[0] === 'WBTC' && constructEvent.type === 'Long Call' ? bnToNumberBTC(BigNumber.from(data.fee)) : bnToNumber(BigNumber.from(data.fee));
-    constructEvent.fees =roundTo5(constructEvent.fees) // round off to 5 decimal places
+    constructEvent.fees = roundTo5(constructEvent.fees) // round off to 5 decimal places
     constructEvent.exerciseValue = roundTo5(bnToNumber(BigNumber.from(data.exerciseValue)));
-    const unit = constructEvent.type === `long Call`? pair.split("/")[0] : 'DAI'
+    const unit = constructEvent.type === `long Call` ? pair.split("/")[0] : 'DAI'
     await http.get(
-      `${endpoint}${network} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
+      `${endpoint}${network} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit} txHash:${network == ethMainnet ? etherScanTx : arbiScanTx}${data.txHash}`
     )
+    let content;
+    let networkColor = network == ethMainnet ? ethColor : arbiColor;
+    switch (pair) {
+      case "WBTC/DAI": {
+        const priceNow = roundTo5((await getWbtcPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        } else {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        }
+        break;
+      }
+      case "WETH/DAI": {
+        const priceNow = roundTo5((await getEthPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        } else {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        }
+        break;
+      }
+      case "LINK/DAI": {
+        const priceNow = roundTo5((await getLinkPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        } else {
+          content = `${networkColor} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`;
+        }
+        break;
+      }
+      default: {
+        console.log("not supported unit", unit);
+      }
+    }
     await http.post(
       envConfig.discordWebHookUrl,
       {
@@ -29,10 +64,10 @@ async function sendExerciseNotification(data: eventExercise, pair: string, netwo
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `${network} New Exercise ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} exerciseValue: ${constructEvent.exerciseValue} fees: ${constructEvent.fees} ${unit}`,
+        content: content,
         embeds: [{
           "title": "TxHash",
-          "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
+          "url": `${network == ethMainnet ? etherScanTx : arbiScanTx}${data.txHash}`
         }]
       }
     )
@@ -42,7 +77,7 @@ async function sendExerciseNotification(data: eventExercise, pair: string, netwo
 }
 
 
-export function startExercise(ethInstance:ethContractInstance, arbiInstance: arbiContractInstance) {
+export function startExercise(ethInstance: ethContractInstance, arbiInstance: arbiContractInstance) {
   [
     { pool: ethInstance.wethDai, pair: 'WETH/DAI' },
     { pool: ethInstance.linkDai, pair: 'LINK/DAI' },
@@ -62,7 +97,7 @@ export function startExercise(ethInstance:ethContractInstance, arbiInstance: arb
         exerciseValue: event.returnValues[`3`],
         fee: event.returnValues[`4`],
       }
-      sendExerciseNotification(eventData,el.pair,ethMainnet);
+      sendExerciseNotification(eventData, el.pair, ethMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
@@ -87,7 +122,7 @@ export function startExercise(ethInstance:ethContractInstance, arbiInstance: arb
         exerciseValue: event.returnValues[`3`],
         fee: event.returnValues[`4`],
       }
-      sendExerciseNotification(eventData,el.pair,arbiMainnet);
+      sendExerciseNotification(eventData, el.pair, arbiMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))

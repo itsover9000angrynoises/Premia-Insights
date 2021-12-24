@@ -1,15 +1,59 @@
 import { envConfig } from "../config/env";
 import { arbiContractInstance, ethContractInstance, eventDeposit } from "../models/models";
-import {bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
+import {bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet, arbiColor, ethColor } from "../utils/utils";
+import { getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice } from "./chainlink-price";
 
 
 
 async function sendDepositNotification(data: eventDeposit,pair: string,network :string) {
   try {
-    const unit = data.type == 'Call' ? pair.split("/")[0] : 'DAI'
+    const unit = data.type == 'Call' ? pair.split("/")[0] : 'DAI'    
     await http.get(
       `${endpoint}${network} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
     )
+    let content;
+    let networkColor = network == ethMainnet ? ethColor: arbiColor; 
+    switch(unit){
+      case "WBTC" :{
+        const priceNow = roundTo5((await getWbtcPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :rocket:)`;
+        }else{
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "WETH" :{
+        const priceNow = roundTo5((await getEthPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :rocket:)`;
+        }else{
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "LINK" :{
+        const priceNow = roundTo5((await getLinkPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :rocket:)`;
+        }else{
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      case "DAI" :{
+        const priceNow = roundTo5((await getDAIPrice())*data.amount);
+        if( priceNow >= parseInt(envConfig.filterPrice)){
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $ :rocket:)`;
+        }else{
+          content=`${networkColor} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit} (${priceNow} $)`;
+        }
+        break;
+      }
+      default :{
+        console.log("not supported unit", unit);
+      }
+    }
     await http.post(
       envConfig.discordWebHookUrl,
       {
@@ -18,7 +62,7 @@ async function sendDepositNotification(data: eventDeposit,pair: string,network :
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `${network} New Deposit ${pair.split("/")[0]} : ${data.type} Pool amount: ${roundTo5(data.amount)} ${unit}`,
+        content: content,
         embeds: [{
           "title": "TxHash",
           "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`

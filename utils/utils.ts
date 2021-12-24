@@ -5,6 +5,14 @@ import axios from 'axios';
 var rateLimit = require('axios-rate-limit');
 export const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 5000 });
 
+export const arbiColor = `\`\`\`ini
+[ARBITRUM-MAINNET]
+\`\`\``;
+
+export const ethColor = `\`\`\`
+[ETH-MAINNET]
+\`\`\``;
+
 export function bnToNumber(bn: BigNumber) {
   return Number(formatUnits(bn, 18));
 }

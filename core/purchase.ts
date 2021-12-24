@@ -1,35 +1,70 @@
 import { arbiContractInstance, ethContractInstance, eventForTelegram, eventPurchase } from "../models/models";
 import { fixedToNumber, parseTokenId, TokenType } from '@premia/utils'
-import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, etherScanTx, ethMainnet, arbiMainnet } from "../utils/utils";
+import { bnToNumber, bnToNumberBTC, endpoint, arbiScanTx, http, roundTo5, etherScanTx, ethMainnet, arbiMainnet, arbiColor, ethColor } from "../utils/utils";
+import { getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice } from "./chainlink-price";
 import { envConfig } from "../config/env";
-import {BigNumber} from "ethers";
+import { BigNumber } from "ethers";
 
 
-async function sendPurchaseNotification(data: eventPurchase, pair: string, network:string) {
+async function sendPurchaseNotification(data: eventPurchase, pair: string, network: string) {
   try {
     let constructEvent: eventForTelegram = {
-      size: data.contractSize,
+      size: roundTo5(data.contractSize),
       pair
     }
-    const {tokenType, maturity, strike64x64} = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
+    const { tokenType, maturity, strike64x64 } = parseTokenId(BigNumber.from(data.longTokenId).toHexString());
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
     await http.get(
       `${endpoint}${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
     )
+    let content;
+    let networkColor = network == ethMainnet ? ethColor : arbiColor;
+    switch (pair) {
+      case "WBTC/DAI": {
+        const priceNow = roundTo5((await getWbtcPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        } else {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        }
+        break;
+      }
+      case "WETH/DAI": {
+        const priceNow = roundTo5((await getEthPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        } else {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        }
+        break;
+      }
+      case "LINK/DAI": {
+        const priceNow = roundTo5((await getLinkPrice()) * <number>constructEvent.size);
+        if (priceNow >= parseInt(envConfig.filterSizePrice)) {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        } else {
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+        }
+        break;
+      }
+      default: {
+        console.log("not supported pair", pair);
+      }
+    }
     await http.post(
       envConfig.discordWebHookUrl,
       {
-        headers:{
+        headers: {
           'Content-type': 'application/json'
         },
         username: "Premia-Insights",
         avatar_url: "",
-        content: `${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`,
+        content: content,
         embeds: [{
           "title": "TxHash",
-          "url": `${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
+          "url": `${network == ethMainnet ? etherScanTx : arbiScanTx}${data.txHash}`
         }]
       }
     )
@@ -59,7 +94,7 @@ export function startPurchase(ethInstance: ethContractInstance, arbiInstance: ar
         feeCost: event.returnValues[`4`],
         newPrice64x64: event.returnValues[`5`]
       }
-      sendPurchaseNotification(eventData, el.pair,ethMainnet);
+      sendPurchaseNotification(eventData, el.pair, ethMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
@@ -85,7 +120,7 @@ export function startPurchase(ethInstance: ethContractInstance, arbiInstance: ar
         feeCost: event.returnValues[`4`],
         newPrice64x64: event.returnValues[`5`]
       }
-      sendPurchaseNotification(eventData, el.pair,arbiMainnet);
+      sendPurchaseNotification(eventData, el.pair, arbiMainnet);
     })
       .on('changed', changed => console.log(changed))
       .on('error', err => console.log(err))
