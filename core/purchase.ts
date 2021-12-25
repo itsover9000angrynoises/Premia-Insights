@@ -16,36 +16,41 @@ async function sendPurchaseNotification(data: eventPurchase, pair: string, netwo
     constructEvent.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
     constructEvent.maturity = new Date(maturity.toNumber() * 1000).toDateString();
     constructEvent.strikePrice = fixedToNumber(strike64x64);
+    constructEvent.baseCost = pair === 'WBTC/DAI' && constructEvent.type ==`long Call` ? roundTo5(bnToNumberBTC(BigNumber.from(data.baseCost))) : roundTo5(bnToNumber(BigNumber.from(data.baseCost)));
+    
     await http.get(
-      `${endpoint}${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${network == ethMainnet ? etherScanTx:arbiScanTx}${data.txHash}`
+      `${endpoint}${network} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} txHash:${network == ethMainnet ? etherScanTx : arbiScanTx}${data.txHash}`
     )
     let content;
     let networkColor = network == ethMainnet ? ethColor : arbiColor;
     switch (pair) {
       case "WBTC/DAI": {
         const priceNow = roundTo5((await getWbtcPrice()) * <number>constructEvent.size);
+        const premiumPriceNow = constructEvent.type == `long Call`? roundTo5(constructEvent.baseCost * (await getWbtcPrice())) : constructEvent.baseCost;
         if (priceNow >= parseInt(envConfig.filterSizePrice)) {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow}$)`;
         } else {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow} $)`;
         }
         break;
       }
       case "WETH/DAI": {
         const priceNow = roundTo5((await getEthPrice()) * <number>constructEvent.size);
+        const premiumPriceNow = constructEvent.type == `long Call`? roundTo5(constructEvent.baseCost * (await getEthPrice())) : constructEvent.baseCost;
         if (priceNow >= parseInt(envConfig.filterSizePrice)) {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow} $)`;
         } else {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow} $)`;
         }
         break;
       }
       case "LINK/DAI": {
         const priceNow = roundTo5((await getLinkPrice()) * <number>constructEvent.size);
+        const premiumPriceNow = constructEvent.type == `long Call`? roundTo5(constructEvent.baseCost * (await getLinkPrice())) : constructEvent.baseCost;
         if (priceNow >= parseInt(envConfig.filterSizePrice)) {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $ :rocket:) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow} $)`;
         } else {
-          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity}`;
+          content = `${networkColor} New Purchase ${constructEvent.pair} ${constructEvent.type} size: ${constructEvent.size} (${priceNow} $) strike: ${constructEvent.strikePrice} maturity: ${constructEvent.maturity} premium: ${constructEvent.baseCost} (${premiumPriceNow} $)`;
         }
         break;
       }

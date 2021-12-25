@@ -25,6 +25,7 @@ export type eventForTelegram = {
   strikePrice?: number,
   fees?:number|string,
   exerciseValue?:number,
+  baseCost?: string|number,
 }
 
 export type eventDeposit = {
