@@ -28,8 +28,8 @@ export async function getWbtcPrice() {
     try {
       const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
       const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
-      const ethAddr = "0xf4030086522a5beea4988f8ca5b36dbc97bee88c"
-      const priceFeed = new web3.eth.Contract(ABI, ethAddr)
+      const wbtcAddr = "0xf4030086522a5beea4988f8ca5b36dbc97bee88c"
+      const priceFeed = new web3.eth.Contract(ABI, wbtcAddr)
       const priceData = await priceFeed.methods.latestRoundData().call()
       const roundOff = await priceFeed.methods.decimals().call();
       myCache.set("wbtc", Number(formatUnits(priceData.answer, roundOff)));
@@ -46,8 +46,8 @@ export async function getLinkPrice() {
     try {
       const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
       const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
-      const ethAddr = "0x2c1d072e956affc0d435cb7ac38ef18d24d9127c"
-      const priceFeed = new web3.eth.Contract(ABI, ethAddr)
+      const linkAddr = "0x2c1d072e956affc0d435cb7ac38ef18d24d9127c"
+      const priceFeed = new web3.eth.Contract(ABI, linkAddr)
       const priceData = await priceFeed.methods.latestRoundData().call()
       const roundOff = await priceFeed.methods.decimals().call();
       myCache.set("link", Number(formatUnits(priceData.answer, roundOff)));
@@ -59,13 +59,31 @@ export async function getLinkPrice() {
   return myCache.get("link");
 }
 
+export async function getAlcxPrice() {
+  if (myCache.get("alcx") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const alcxAddr = "0x194a9aaf2e0b67c35915cd01101585a33fe25caa"
+      const priceFeed = new web3.eth.Contract(ABI, alcxAddr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("alcx", (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice())));
+      return (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice()));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("alcx");
+}
+
 export async function getDAIPrice() {
   if (myCache.get("dai") === undefined) {
     try {
       const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
       const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
-      const ethAddr = "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9"
-      const priceFeed = new web3.eth.Contract(ABI, ethAddr)
+      const daiAddr = "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9"
+      const priceFeed = new web3.eth.Contract(ABI, daiAddr)
       const priceData = await priceFeed.methods.latestRoundData().call()
       const roundOff = await priceFeed.methods.decimals().call();
       myCache.set("dai", Number(formatUnits(priceData.answer, roundOff)));

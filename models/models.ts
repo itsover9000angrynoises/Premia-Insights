@@ -1,54 +1,42 @@
-export type eventPurchase = {
-  account: string,
-  longTokenId: string,
-  contractSize: number,
-  baseCost: string,
-  feeCost: string,
-  newPrice64x64: string,
+export type event = {
+  account?: string,
+  baseCost?: number | string,
+  feeCost?: string | number,
+  newPrice64x64?: string,
+  user?: string,
+  longTokenId?: string,
+  contractSize?: number,
+  exerciseValue?: string|number,
+  fee?: number|string,
+  type?: string,
+  amount?: number,
   txHash: string,
-}
-
-export type eventExercise = {
-  user: string,
-  longTokenId: string,
-  contractSize:number,
-  exerciseValue:string,
-  fee:string,
-  txHash: string,
+  maturity?:string,
+  strikePrice?:number,
 }
 
 export type eventForTelegram = {
-  size: number|string,
+  size: number | string,
   pair?: string,
   type?: string,
   maturity?: string,
   strikePrice?: number,
-  fees?:number|string,
-  exerciseValue?:number,
-  baseCost?: string|number,
-}
-
-export type eventDeposit = {
-  type: string,
-  amount: number,
-  txHash: string,
-}
-
-export type eventWithdrawal ={
-  type: string,
-  amount: number,
-  txHash: string,
+  fees?: number | string,
+  exerciseValue?: number,
+  baseCost?: string | number,
 }
 
 
 export type ethContractInstance = {
-  wethDai:any,
-  wbtcDai:any,
-  linkDai:any,
+  wethDai?: any,
+  wbtcDai?: any,
+  linkDai?: any,
+  alethAlusd?: any,
+  alcxDai?: any
 }
 
 export type arbiContractInstance = {
-  wethDai:any,
-  wbtcDai:any,
-  linkDai:any,
+  wethDai: any,
+  wbtcDai: any,
+  linkDai: any,
 }
