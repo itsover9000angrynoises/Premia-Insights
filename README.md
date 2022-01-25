@@ -7,4 +7,4 @@ Bot to notify Premia Onchain pool activity
 3) Run npm run start
 
 ## Description:-
-Each Functions in the core folder subscribes to corresponding events from the pools and sends the notification
+Each class in the core folder subscribes to the functions in the pools and triggers the notification
