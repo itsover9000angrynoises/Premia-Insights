@@ -278,7 +278,7 @@ export default class alethalusd {
     cron.schedule('0 0 0 * * *', () => {
       try {
         http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} 24HR ${this.pair.split("/")[0]} Total Traded Volume ${this.myCache.get(this.pair.split("/")[0])}`
+          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} 24HR ${this.pair.split("/")[0]} Total Traded Size ${this.myCache.get(this.pair.split("/")[0]) == undefined ? '0': this.myCache.get(this.pair.split("/")[0])}`
         );
         let networkColor = this.network == ethMainnet ? ethColor : arbiColor;
         http.post(
@@ -289,7 +289,7 @@ export default class alethalusd {
             },
             username: "Premia-Insights",
             avatar_url: "",
-            content: `${networkColor} 24HR ${this.pair.split("/")[0]} Total Traded Volume ${this.myCache.get(this.pair.split("/")[0])}`
+            content: `${networkColor} 24HR ${this.pair.split("/")[0]} Total Traded Size ${this.myCache.get(this.pair.split("/")[0]) == undefined ? '0': this.myCache.get(this.pair.split("/")[0])}`
           }
         )
       } catch (e) {
