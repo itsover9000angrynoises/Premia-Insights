@@ -4,11 +4,8 @@ import { event } from "../models/models";
 import { arbiColor, arbiMainnet, arbiScanTx, bnToNumber, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw } from "../utils/utils";
 import { getDAIPrice,getLinkPrice } from "./chainlink-price";
 import { BigNumber } from "ethers";
-const NodeCache = require("node-cache");
-var cron = require('node-cron');
 
 export default class linkdai {
-  myCache = new NodeCache({ stdTTL: 86400, checkperiod: 86395 });
   pair = 'Link/DAI';
   web3PoolInstance: any;
   network: string;
@@ -24,7 +21,6 @@ export default class linkdai {
     this.deposit(this.web3PoolInstance, this.network);
     this.exercise(this.web3PoolInstance, this.network);
     this.withdraw(this.web3PoolInstance, this.network);
-    this.sendDailyVolume();
   }
 
   private purchase(web3PoolInstance: any, network: string) {
@@ -43,11 +39,6 @@ export default class linkdai {
         feeCost: event.returnValues[`4`],
         newPrice64x64: event.returnValues[`5`]
       }      
-      if (this.myCache.get(this.pair.split("/")[0]) === undefined) {
-        this.myCache.set(this.pair.split("/")[0], roundTo5(eventData.contractSize as number))
-      } else {
-        this.myCache.set(this.pair.split("/")[0], roundTo5(this.myCache.get(this.pair.split("/")[0]) + eventData.contractSize as number))
-      }
       this.sendNotification(purchase, eventData, network);
     })
       .on('changed', changed => console.log(changed))
@@ -274,33 +265,6 @@ export default class linkdai {
     }
   }
 
-  private sendDailyVolume() {
-    cron.schedule('0 0 0 * * *', () => {
-      try {
-        http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} 24HR ${this.pair.split("/")[0]} Total Traded Size ${this.myCache.get(this.pair.split("/")[0]) == undefined ? '0': this.myCache.get(this.pair.split("/")[0])}`
-        );
-        let networkColor = this.network == ethMainnet ? ethColor : arbiColor;
-        http.post(
-          envConfig.discordWebHookUrl,
-          {
-            headers: {
-              'Content-type': 'application/json'
-            },
-            username: "Premia-Insights",
-            avatar_url: "",
-            content: `${networkColor} 24HR ${this.pair.split("/")[0]} Total Traded Size ${this.myCache.get(this.pair.split("/")[0]) == undefined ? '0': this.myCache.get(this.pair.split("/")[0])}`
-          }
-        )
-      } catch (e) {
-        console.log(e);
-      }
-    },
-      {
-        timezone: "Etc/UTC"
-      }
-    );
-  }
 
 
 }
