@@ -32,11 +32,13 @@ export type ethContractInstance = {
   wbtcDai?: any,
   linkDai?: any,
   alethAlusd?: any,
-  alcxDai?: any
+  alcxDai?: any,
+  yfiDai?:any
 }
 
 export type arbiContractInstance = {
   wethDai: any,
   wbtcDai: any,
   linkDai: any,
+  yfiDai?:any
 }

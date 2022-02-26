@@ -1,10 +1,11 @@
 var Web3 = require("web3");
-import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, wbtcDaiAddress, wbtcDaiAddressArbi, wethDaiAddress, wethDaiAddressArbi } from './config/env';
+import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, wbtcDaiAddress, wbtcDaiAddressArbi, wethDaiAddress, wethDaiAddressArbi, yfidaiAddress, yfidaiAddressArbi } from './config/env';
 import alcxdai from './core/alcxdai';
 import alethalusd from './core/alethalusd';
 import linkdai from './core/linkdai';
 import wbtcdai from './core/wbtcdai';
 import wethdai from './core/wethdai';
+import yfidai from './core/yfidai';
 import { arbiContractInstance, ethContractInstance } from './models/models';
 import { arbiMainnet, ethMainnet } from './utils/utils';
 
@@ -113,6 +114,9 @@ const ethInstance: ethContractInstance = {
   alethAlusd: new web3.eth.Contract(diamondProxyABI,
     alethAlusdAddress
   ),
+  yfiDai: new web3.eth.Contract(diamondProxyABI,
+    yfidaiAddress
+  ),
 }
 
 var web3Arbi = new Web3(getArbiProvider())
@@ -126,6 +130,9 @@ const arbiInstance: arbiContractInstance = {
   ),
   linkDai: new web3Arbi.eth.Contract(diamondProxyABI,
     linkDaiAddressArbi
+  ),
+  yfiDai: new web3Arbi.eth.Contract(diamondProxyABI,
+    yfidaiAddressArbi
   ),
 }
 
@@ -160,6 +167,14 @@ function start() {
   const alethalusdeth = new alethalusd(ethInstance.alethAlusd, ethMainnet, envConfig.startBlocKHeightEth);
   alethalusdeth.start();
   console.log(`----------Started Listing to AlETH/AlUSD ${ethMainnet}`);
+
+  const yfidaieth = new yfidai(ethInstance.yfiDai, ethMainnet, envConfig.startBlocKHeightEth);
+  yfidaieth.start();
+  console.log(`----------Started Listing to YFI/DAI ${ethMainnet}`);
+
+  const yfidaiarbi = new yfidai(arbiInstance.yfiDai, arbiMainnet, envConfig.startBlocKHeightArbi);
+  yfidaiarbi.start();
+  console.log(`----------Started Listing to YFI/DAI ${arbiMainnet}`);
 
 };
 

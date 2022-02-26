@@ -77,6 +77,24 @@ export async function getAlcxPrice() {
   return myCache.get("alcx");
 }
 
+export async function getYfiPrice() {
+  if (myCache.get("yfi") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const yfiAddr = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
+      const priceFeed = new web3.eth.Contract(ABI, yfiAddr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("yfi", Number(formatUnits(priceData.answer, roundOff)));
+      return Number(formatUnits(priceData.answer, roundOff));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("yfi");
+}
+
 export async function getDAIPrice() {
   if (myCache.get("dai") === undefined) {
     try {
