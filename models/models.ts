@@ -26,6 +26,10 @@ export type eventForTelegram = {
   baseCost?: string | number,
 }
 
+export type poolPrice = {
+  callPrice : Function,
+  putPrice : Function
+}
 
 export type ethContractInstance = {
   wethDai?: any,

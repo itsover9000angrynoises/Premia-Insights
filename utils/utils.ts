@@ -24,6 +24,11 @@ export function bnToNumberBTC(bn: BigNumber) {
 export function roundTo5(number: number) {
   return (Math.round(number*100000)/100000);
 }
+
+export function multiply(a:number,b:number){
+  return roundTo5((a*b));
+}
+
 export const etherScanTx = 'https://etherscan.io/tx/';
 export const arbiScanTx = 'https://arbiscan.io/tx/';
 

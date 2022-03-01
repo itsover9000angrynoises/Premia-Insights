@@ -1,11 +1,8 @@
 var Web3 = require("web3");
 import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, wbtcDaiAddress, wbtcDaiAddressArbi, wethDaiAddress, wethDaiAddressArbi, yfidaiAddress, yfidaiAddressArbi } from './config/env';
-import alcxdai from './core/alcxdai';
-import alethalusd from './core/alethalusd';
-import linkdai from './core/linkdai';
-import wbtcdai from './core/wbtcdai';
-import wethdai from './core/wethdai';
-import yfidai from './core/yfidai';
+import { getAlcxPrice, getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice, getYfiPrice } from './core/chainlink-price';
+import eightDecimalPool from './core/eightDecimalPool';
+import eighteenDecimalPool from './core/eighteenDecimalPool';
 import { arbiContractInstance, ethContractInstance } from './models/models';
 import { arbiMainnet, ethMainnet } from './utils/utils';
 
@@ -137,42 +134,95 @@ const arbiInstance: arbiContractInstance = {
 }
 
 function start() {
-  const wbtcdaieth = new wbtcdai(ethInstance.wbtcDai, ethMainnet, envConfig.startBlocKHeightEth);
+  const wbtcdaieth = new eightDecimalPool(
+    "WBTC/DAI",
+    ethInstance.wbtcDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getWbtcPrice, putPrice: getDAIPrice }
+  );
   wbtcdaieth.start();
   console.log(`----------Started Listing to WBTC/DAI ${ethMainnet}`);
-  const wbtcdaiarbi = new wbtcdai(arbiInstance.wbtcDai, arbiMainnet, envConfig.startBlocKHeightArbi);
+
+  const wbtcdaiarbi = new eightDecimalPool(
+    "WBTC/DAI",
+    arbiInstance.wbtcDai,
+    arbiMainnet,
+    envConfig.startBlocKHeightArbi,
+    { callPrice: getWbtcPrice, putPrice: getDAIPrice }
+  );
   wbtcdaiarbi.start();
   console.log(`----------Started Listing to WBTC/DAI ${arbiMainnet}`);
 
-  const wethdaieth = new wethdai(ethInstance.wethDai, ethMainnet, envConfig.startBlocKHeightEth);
+  const wethdaieth = new eighteenDecimalPool(
+    "WETH/DAI",
+    ethInstance.wethDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getEthPrice, putPrice: getDAIPrice });
   wethdaieth.start();
   console.log(`----------Started Listing to WETH/DAI ${ethMainnet}`);
 
-  const wethdaiarbi = new wethdai(arbiInstance.wethDai, arbiMainnet, envConfig.startBlocKHeightArbi);
+  const wethdaiarbi = new eighteenDecimalPool(
+    "WETH/DAI",
+    arbiInstance.wethDai,
+    arbiMainnet,
+    envConfig.startBlocKHeightArbi,
+    { callPrice: getEthPrice, putPrice: getDAIPrice });
   wethdaiarbi.start();
   console.log(`----------Started Listing to WETH/DAI ${arbiMainnet}`);
 
-  const linkdaieth = new linkdai(ethInstance.linkDai, ethMainnet, envConfig.startBlocKHeightEth);
+  const linkdaieth = new eighteenDecimalPool(
+    "Link/DAI",
+    ethInstance.linkDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getLinkPrice, putPrice: getDAIPrice });
   linkdaieth.start();
   console.log(`----------Started Listing to Link/DAI ${ethMainnet}`);
 
-  const linkdaiarbi = new linkdai(arbiInstance.linkDai, arbiMainnet, envConfig.startBlocKHeightArbi);
+  const linkdaiarbi = new eighteenDecimalPool(
+    "Link/DAI",
+    arbiInstance.linkDai,
+    arbiMainnet,
+    envConfig.startBlocKHeightArbi,
+    { callPrice: getLinkPrice, putPrice: getDAIPrice });
   linkdaiarbi.start();
   console.log(`----------Started Listing to Link/DAI ${arbiMainnet}`);
 
-  const alcxdaieth = new alcxdai(ethInstance.alcxDai, ethMainnet, envConfig.startBlocKHeightEth);
+  const alcxdaieth = new eighteenDecimalPool(
+    "Alcx/DAI",
+    ethInstance.alcxDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getAlcxPrice, putPrice: getDAIPrice });
   alcxdaieth.start();
   console.log(`----------Started Listing to Alcx/DAI ${ethMainnet}`);
 
-  const alethalusdeth = new alethalusd(ethInstance.alethAlusd, ethMainnet, envConfig.startBlocKHeightEth);
+  const alethalusdeth = new eighteenDecimalPool(
+    "AlETH/AlUSD",
+    ethInstance.alethAlusd,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getEthPrice, putPrice: getDAIPrice });
   alethalusdeth.start();
   console.log(`----------Started Listing to AlETH/AlUSD ${ethMainnet}`);
 
-  const yfidaieth = new yfidai(ethInstance.yfiDai, ethMainnet, envConfig.startBlocKHeightEth);
+  const yfidaieth = new eighteenDecimalPool(
+    "YFI/DAI",
+    ethInstance.yfiDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getYfiPrice, putPrice: getDAIPrice });
   yfidaieth.start();
   console.log(`----------Started Listing to YFI/DAI ${ethMainnet}`);
 
-  const yfidaiarbi = new yfidai(arbiInstance.yfiDai, arbiMainnet, envConfig.startBlocKHeightArbi);
+  const yfidaiarbi = new eighteenDecimalPool(
+    "YFI/DAI",
+    arbiInstance.yfiDai,
+    arbiMainnet,
+    envConfig.startBlocKHeightArbi,
+    { callPrice: getYfiPrice, putPrice: getDAIPrice });
   yfidaiarbi.start();
   console.log(`----------Started Listing to YFI/DAI ${arbiMainnet}`);
 
