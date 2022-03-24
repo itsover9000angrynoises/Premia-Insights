@@ -3,8 +3,10 @@ import { envConfig } from "../config/env";
 import { event, poolPrice } from "../models/models";
 import { arbiColor, arbiMainnet, arbiScanTx, bnToNumber, bnToNumberBTC, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw, multiply } from "../utils/utils";
 import { BigNumber } from "ethers";
+const Cache = require("node-cache");
 
 export default class eightDecimalPool {
+  cache = new Cache({ stdTTL: 1500, checkperiod: 750 });
   pair: string;
   web3PoolInstance: any;
   network: string;
@@ -112,164 +114,166 @@ export default class eightDecimalPool {
 
 
   private async sendNotification(actions: string, eventData: event, networks: string) {
-    let content: string;
-    let networkColor = this.network == ethMainnet ? ethColor : arbiColor;
-    try {
-      if (actions === deposit) {
-        const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
-        let content;
-        if (unit == this.pair.split("/")[0]) {
-          const priceNow = roundTo5(await this.callPrice());
-          const priceAmountNow = multiply(priceNow , eventData.amount);
-          if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-            content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
-          } else {
-            content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+    if (this.cache.get(eventData.txHash) === undefined) {
+      this.cache.set(eventData.txHash, true);
+      let content: string;
+      let networkColor = this.network == ethMainnet ? ethColor : arbiColor;
+      try {
+        if (actions === deposit) {
+          const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
+          let content;
+          if (unit == this.pair.split("/")[0]) {
+            const priceNow = roundTo5(await this.callPrice());
+            const priceAmountNow = multiply(priceNow, eventData.amount);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
+            } else {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            }
           }
-        }
-        else {
-          const priceNow = roundTo5(await this.putPrice());
-          const priceAmountNow = multiply(priceNow , eventData.amount);
-          if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-            content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
-          } else {
-            content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+          else {
+            const priceNow = roundTo5(await this.putPrice());
+            const priceAmountNow = multiply(priceNow, eventData.amount);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
+            } else {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            }
           }
-        }
-        await http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-        )
-        await http.post(
-          envConfig.discordWebHookUrl,
-          {
-            headers: {
-              'Content-type': 'application/json'
-            },
-            username: "Premia-Insights",
-            avatar_url: "",
-            content: content,
-            embeds: [{
-              "title": "TxHash",
-              "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-            }]
-          }
-        )
+          await http.get(
+            `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+          )
+          await http.post(
+            envConfig.discordWebHookUrl,
+            {
+              headers: {
+                'Content-type': 'application/json'
+              },
+              username: "Premia-Insights",
+              avatar_url: "",
+              content: content,
+              embeds: [{
+                "title": "TxHash",
+                "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+              }]
+            }
+          )
 
-      }
-      if (actions === withdraw) {
-        const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
-        let content;
-        if (unit == this.pair.split("/")[0]) {
-          const priceNow = roundTo5(await this.callPrice());
-          const priceAmountNow = multiply(priceNow , eventData.amount);
-          if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-            content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+        }
+        if (actions === withdraw) {
+          const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
+          let content;
+          if (unit == this.pair.split("/")[0]) {
+            const priceNow = roundTo5(await this.callPrice());
+            const priceAmountNow = multiply(priceNow, eventData.amount);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+            } else {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            }
+          }
+          else {
+            const priceNow = roundTo5(await this.putPrice());
+            const priceAmountNow = multiply(priceNow, eventData.amount);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+            } else {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            }
+          }
+          await http.get(
+            `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+          )
+          await http.post(
+            envConfig.discordWebHookUrl,
+            {
+              headers: {
+                'Content-type': 'application/json'
+              },
+              username: "Premia-Insights",
+              avatar_url: "",
+              content: content,
+              embeds: [{
+                "title": "TxHash",
+                "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+              }]
+            }
+          )
+        }
+        if (actions === purchase) {
+          const priceNow = roundTo5((await this.callPrice()));
+          const priceSizeNow = multiply(priceNow, eventData.contractSize);
+          const { tokenType, maturity, strike64x64 } = parseTokenId(BigNumber.from(eventData.longTokenId).toHexString());
+          eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+          eventData.maturity = new Date(maturity.toNumber() * 1000).toDateString();
+          eventData.strikePrice = fixedToNumber(strike64x64);
+          eventData.baseCost = eventData.type == `long Call` ? roundTo5(bnToNumberBTC(BigNumber.from(eventData.baseCost))) : roundTo5(bnToNumber(BigNumber.from(eventData.baseCost)));
+          eventData.feeCost = eventData.type == `long Call` ? roundTo5(bnToNumberBTC(BigNumber.from(eventData.feeCost))) : roundTo5(bnToNumber(BigNumber.from(eventData.feeCost)));
+          const breakEven = tokenType === TokenType.LongCall ? roundTo5(eventData.strikePrice + (multiply((eventData.baseCost + eventData.feeCost), priceNow) / eventData.contractSize)) : roundTo5(eventData.strikePrice - ((eventData.baseCost + eventData.feeCost) / eventData.contractSize))
+          const premiumPriceNow = eventData.type == `long Call` ? multiply(eventData.baseCost, priceNow) : eventData.baseCost;
+          const feesPriceNow = eventData.type == `long Call` ? multiply(eventData.feeCost, priceNow) : eventData.feeCost
+          if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
+            content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow}$) feesPaid: ${feesPriceNow}$ `;
           } else {
-            content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow} $) feesPaid: ${feesPriceNow}$ `;
           }
+          await http.get(
+            `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow} $) feesPaid: ${feesPriceNow}$  txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+          );
+          await http.post(
+            envConfig.discordWebHookUrl,
+            {
+              headers: {
+                'Content-type': 'application/json'
+              },
+              username: "Premia-Insights",
+              avatar_url: "",
+              content: content,
+              embeds: [{
+                "title": "TxHash",
+                "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+              }]
+            }
+          )
         }
-        else {
-          const priceNow = roundTo5(await this.putPrice());
-          const priceAmountNow = multiply(priceNow , eventData.amount);
-          if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-            content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+        if (actions === exercise) {
+          const { tokenType } = parseTokenId(BigNumber.from(eventData.longTokenId).toHexString());
+          eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
+          eventData.fee = eventData.type === 'Long Call' ? bnToNumberBTC(BigNumber.from(eventData.fee)) : bnToNumber(BigNumber.from(eventData.fee));
+          eventData.fee = roundTo5(eventData.fee) // round off to 5 decimal places
+          eventData.exerciseValue = roundTo5(bnToNumber(BigNumber.from(eventData.exerciseValue)));
+          const unit = eventData.type === `long Call` ? this.pair.split("/")[0] : this.pair.split("/")[1]
+          let content;
+          const priceSizeNow = multiply((await this.callPrice()), <number>eventData.contractSize);
+          if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
+            content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;
           } else {
-            content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+            content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;
           }
+          await http.get(
+            `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+          )
+          await http.post(
+            envConfig.discordWebHookUrl,
+            {
+              headers: {
+                'Content-type': 'application/json'
+              },
+              username: "Premia-Insights",
+              avatar_url: "",
+              content: content,
+              embeds: [{
+                "title": "TxHash",
+                "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
+              }]
+            }
+          )
         }
-        await http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-        )
-        await http.post(
-          envConfig.discordWebHookUrl,
-          {
-            headers: {
-              'Content-type': 'application/json'
-            },
-            username: "Premia-Insights",
-            avatar_url: "",
-            content: content,
-            embeds: [{
-              "title": "TxHash",
-              "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-            }]
-          }
-        )
+      } catch (e) {
+        console.log(e);
       }
-      if (actions === purchase) {
-        const priceNow = roundTo5((await this.callPrice()));
-        const priceSizeNow = multiply(priceNow , eventData.contractSize);
-        const { tokenType, maturity, strike64x64 } = parseTokenId(BigNumber.from(eventData.longTokenId).toHexString());
-        eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
-        eventData.maturity = new Date(maturity.toNumber() * 1000).toDateString();
-        eventData.strikePrice = fixedToNumber(strike64x64);
-        eventData.baseCost = eventData.type == `long Call` ? roundTo5(bnToNumberBTC(BigNumber.from(eventData.baseCost))) : roundTo5(bnToNumber(BigNumber.from(eventData.baseCost)));
-        eventData.feeCost = eventData.type == `long Call` ? roundTo5(bnToNumberBTC(BigNumber.from(eventData.feeCost))) : roundTo5(bnToNumber(BigNumber.from(eventData.feeCost)));
-        const breakEven = tokenType === TokenType.LongCall ? roundTo5(eventData.strikePrice + (multiply((eventData.baseCost + eventData.feeCost) , priceNow) / eventData.contractSize)) : roundTo5(eventData.strikePrice - ((eventData.baseCost + eventData.feeCost) / eventData.contractSize))
-        const premiumPriceNow = eventData.type == `long Call` ? multiply(eventData.baseCost , priceNow) : eventData.baseCost;
-        const feesPriceNow = eventData.type == `long Call` ? multiply(eventData.feeCost , priceNow) : eventData.feeCost
-        if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
-          content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow}$) feesPaid: ${feesPriceNow}$ `;
-        } else {
-          content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow} $) feesPaid: ${feesPriceNow}$ `;
-        }
-        await http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow} $) feesPaid: ${feesPriceNow}$  txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-        );
-        await http.post(
-          envConfig.discordWebHookUrl,
-          {
-            headers: {
-              'Content-type': 'application/json'
-            },
-            username: "Premia-Insights",
-            avatar_url: "",
-            content: content,
-            embeds: [{
-              "title": "TxHash",
-              "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-            }]
-          }
-        )
-      }
-      if (actions === exercise) {
-        const { tokenType } = parseTokenId(BigNumber.from(eventData.longTokenId).toHexString());
-        eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
-        eventData.fee = eventData.type === 'Long Call' ? bnToNumberBTC(BigNumber.from(eventData.fee)) : bnToNumber(BigNumber.from(eventData.fee));
-        eventData.fee = roundTo5(eventData.fee) // round off to 5 decimal places
-        eventData.exerciseValue = roundTo5(bnToNumber(BigNumber.from(eventData.exerciseValue)));
-        const unit = eventData.type === `long Call` ? this.pair.split("/")[0] : this.pair.split("/")[1]
-        let content;
-        const priceSizeNow = multiply((await this.callPrice()),<number>eventData.contractSize);
-        if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
-          content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;
-        } else {
-          content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;
-        }
-        await http.get(
-          `${endpoint}${this.network == ethMainnet ? ethMainnet : arbiMainnet} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit} txHash:${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-        )
-        await http.post(
-          envConfig.discordWebHookUrl,
-          {
-            headers: {
-              'Content-type': 'application/json'
-            },
-            username: "Premia-Insights",
-            avatar_url: "",
-            content: content,
-            embeds: [{
-              "title": "TxHash",
-              "url": `${this.network == ethMainnet ? etherScanTx : arbiScanTx}${eventData.txHash}`
-            }]
-          }
-        )
-      }
-    } catch (e) {
-      console.log(e);
     }
   }
-
 
 
 }

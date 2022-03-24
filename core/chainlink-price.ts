@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { envConfig } from '../config/env';
 
-const Web3 = require("web3")
+const Web3 = require("web3");
 const NodeCache = require("node-cache");
 const myCache = new NodeCache({ stdTTL: 1500, checkperiod: 1450 });
 
