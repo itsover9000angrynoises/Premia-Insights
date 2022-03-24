@@ -1,11 +1,9 @@
 import { fixedToNumber, parseTokenId, TokenType } from "@premia/utils";
 import { envConfig } from "../config/env";
 import { event, poolPrice } from "../models/models";
-import { arbiColor, arbiMainnet, arbiScanTx, bnToNumber, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw, multiply } from "../utils/utils";
+import { arbiColor, arbiMainnet, arbiScanTx, bnToNumber, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw, multiply, cache } from "../utils/utils";
 import { BigNumber } from "ethers";
-const Cache = require("node-cache");
 export default class eighteenDecimalPool {
-  cache = new Cache({ stdTTL: 1500, checkperiod: 1450 });
   pair: string;
   web3PoolInstance: any;
   network: string;
@@ -113,8 +111,8 @@ export default class eighteenDecimalPool {
 
 
   private async sendNotification(actions: string, eventData: event, networks: string) {
-    if (this.cache.get(eventData.txHash) === undefined) {
-      this.cache.set(eventData.txHash, true);
+    if (cache.get(eventData.txHash) === undefined) {
+      cache.set(eventData.txHash, true);
       let content: string;
       let networkColor = networks == ethMainnet ? ethColor : arbiColor;
       try {

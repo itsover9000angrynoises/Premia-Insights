@@ -3,9 +3,11 @@ import { formatUnits } from 'ethers/lib/utils';
 import { envConfig, TwitterConfig } from '../config/env';
 import axios from 'axios';
 import { TwitterApi } from 'twitter-api-v2';
+const Cache = require("node-cache");
 
 var rateLimit = require('axios-rate-limit');
 export const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 5000 });
+export const cache = new Cache({ stdTTL: 1500, checkperiod: 750 });
 
 export const arbiColor = `\`\`\`ini
 [ARBITRUM-MAINNET]
