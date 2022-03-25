@@ -26,6 +26,7 @@ export const linkDaiAddress = "0xFDD2FC2c73032AE1501eF4B19E499F2708F34657";
 export const alcxDaiAddress = "0x2fb48b41e3bf0c86e8a90e7ca168e6b63622855f";
 export const alethAlusdAddress = "0x9998ca8ea9e39d5c84a171ecb3303674e666ef9c";
 export const yfidaiAddress = "0xb7cd1bb23c69b6becdf5aa0fe17c444db67f5d93";
+export const lunadaiAddress = "0x4FCB6363acF29133540F85Df2f2A0CAB9EefD3c0";
 export const wethDaiAddressArbi = '0xE5DbC4EDf467B609A063c7ea7fAb976C6b9BAa1a';
 export const wbtcDaiAddressArbi = "0xb5fE3bc2eF4c34cC233922dfF2Fcb1B1BF89A38E";
 export const linkDaiAddressArbi = "0xf87Ca9EB60c2E40A6C5Ab14ca291934a95F845Ff";

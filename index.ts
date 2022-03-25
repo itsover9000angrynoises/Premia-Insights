@@ -1,6 +1,6 @@
 var Web3 = require("web3");
-import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, wbtcDaiAddress, wbtcDaiAddressArbi, wethDaiAddress, wethDaiAddressArbi, yfidaiAddress, yfidaiAddressArbi } from './config/env';
-import { getAlcxPrice, getDAIPrice, getEthPrice, getLinkPrice, getWbtcPrice, getYfiPrice } from './core/chainlink-price';
+import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, lunadaiAddress, wbtcDaiAddress, wbtcDaiAddressArbi, wethDaiAddress, wethDaiAddressArbi, yfidaiAddress, yfidaiAddressArbi } from './config/env';
+import { getAlcxPrice, getDAIPrice, getEthPrice, getLinkPrice, getLunaPrice, getWbtcPrice, getYfiPrice } from './core/chainlink-price';
 import eightDecimalPool from './core/eightDecimalPool';
 import eighteenDecimalPool from './core/eighteenDecimalPool';
 import { arbiContractInstance, ethContractInstance } from './models/models';
@@ -114,6 +114,9 @@ const ethInstance: ethContractInstance = {
   yfiDai: new web3.eth.Contract(diamondProxyABI,
     yfidaiAddress
   ),
+  lunaDai: new web3.eth.Contract(diamondProxyABI,
+    lunadaiAddress
+  ),
 }
 
 var web3Arbi = new Web3(getArbiProvider())
@@ -225,6 +228,16 @@ function start() {
     { callPrice: getYfiPrice, putPrice: getDAIPrice });
   yfidaiarbi.start();
   console.log(`----------Started Listing to YFI/DAI ${arbiMainnet}`);
+
+  const lunadaieth = new eighteenDecimalPool(
+    "LUNA/DAI",
+    ethInstance.lunaDai,
+    ethMainnet,
+    envConfig.startBlocKHeightEth,
+    { callPrice: getLunaPrice, putPrice: getDAIPrice });
+  lunadaieth.start();
+  console.log(`----------Started Listing to LUNA/DAI ${ethMainnet}`);
+
 
 };
 

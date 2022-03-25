@@ -95,6 +95,24 @@ export async function getYfiPrice() {
   return myCache.get("yfi");
 }
 
+export async function getLunaPrice() {
+  if (myCache.get("luna") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const lunaAddr = "0x91e9331556ed76c9393055719986409e11b56f73"
+      const priceFeed = new web3.eth.Contract(ABI, lunaAddr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("luna", (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice())));
+      return (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice()));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("luna");
+}
+
 export async function getDAIPrice() {
   if (myCache.get("dai") === undefined) {
     try {

@@ -37,7 +37,8 @@ export type ethContractInstance = {
   linkDai?: any,
   alethAlusd?: any,
   alcxDai?: any,
-  yfiDai?:any
+  yfiDai?:any,
+  lunaDai?:any
 }
 
 export type arbiContractInstance = {
