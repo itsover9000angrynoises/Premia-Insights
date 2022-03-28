@@ -239,7 +239,7 @@ export default class eightDecimalPool {
           eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
           eventData.fee = eventData.type === 'Long Call' ? bnToNumberBTC(BigNumber.from(eventData.fee)) : bnToNumber(BigNumber.from(eventData.fee));
           eventData.fee = roundTo5(eventData.fee) // round off to 5 decimal places
-          eventData.exerciseValue = roundTo5(bnToNumber(BigNumber.from(eventData.exerciseValue)));
+          eventData.exerciseValue = tokenType === TokenType.LongCall ? roundTo5(bnToNumberBTC(BigNumber.from(eventData.exerciseValue))) : roundTo5(bnToNumber(BigNumber.from(eventData.exerciseValue)));
           const unit = eventData.type === `long Call` ? this.pair.split("/")[0] : this.pair.split("/")[1]
           let content;
           const priceSizeNow = multiply((await this.callPrice()), <number>eventData.contractSize);
