@@ -6,13 +6,13 @@ export type event = {
   user?: string,
   longTokenId?: string,
   contractSize?: number,
-  exerciseValue?: string|number,
-  fee?: number|string,
+  exerciseValue?: string | number,
+  fee?: number | string,
   type?: string,
   amount?: number,
   txHash: string,
-  maturity?:string,
-  strikePrice?:number,
+  maturity?: string,
+  strikePrice?: number,
 }
 
 export type eventForTelegram = {
@@ -27,8 +27,14 @@ export type eventForTelegram = {
 }
 
 export type poolPrice = {
-  callPrice : Function,
-  putPrice : Function
+  callPrice: Function,
+  putPrice: Function
+}
+
+export type assetDecimals = {
+  callAsset: Function,
+  putAsset: Function,
+  contract: Function,
 }
 
 export type ethContractInstance = {
@@ -37,13 +43,20 @@ export type ethContractInstance = {
   linkDai?: any,
   alethAlusd?: any,
   alcxDai?: any,
-  yfiDai?:any,
-  lunaDai?:any
+  yfiDai?: any,
+  lunaDai?: any
 }
 
 export type arbiContractInstance = {
   wethDai: any,
   wbtcDai: any,
   linkDai: any,
-  yfiDai?:any
+  yfiDai?: any
+}
+
+export type ftmContractInstance = {
+  wethUsdc: any,
+  wbtcUsdc: any,
+  wftmUsdc: any,
+  yfiUsdc: any
 }

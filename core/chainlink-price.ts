@@ -130,3 +130,39 @@ export async function getDAIPrice() {
   }
   return myCache.get("dai");
 }
+
+export async function getUsdcPrice() {
+  if (myCache.get("usdc") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const usdcAddr = "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6"
+      const priceFeed = new web3.eth.Contract(ABI, usdcAddr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("usdc", Number(formatUnits(priceData.answer, roundOff)));
+      return Number(formatUnits(priceData.answer, roundOff));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("usdc");
+}
+
+export async function getFtmPrice() {
+  if (myCache.get("ftm") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.httpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const ftmAddr = "0x2de7e4a9488488e0058b95854cc2f7955b35dc9b"
+      const priceFeed = new web3.eth.Contract(ABI, ftmAddr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("ftm", (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice())));
+      return (Number(formatUnits(priceData.answer, roundOff)) * (await getEthPrice()));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("ftm");
+}

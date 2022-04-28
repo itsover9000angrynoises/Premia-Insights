@@ -17,29 +17,38 @@ export const ethColor = `\`\`\`
 [ETH-MAINNET]
 \`\`\``;
 
+export const ftmColor = `\`\`\`yaml
+[FANTOM-MAINNET]
+\`\`\``;
+
 export function bnToNumber(bn: BigNumber) {
   return Number(formatUnits(bn, 18));
 }
 export function bnToNumberBTC(bn: BigNumber) {
   return Number(formatUnits(bn, 8));
 }
+export function bnToNumberSix(bn: BigNumber) {
+  return Number(formatUnits(bn, 6));
+}
 export function roundTo5(number: number) {
-  return (Math.round(number*100000)/100000);
+  return (Math.round(number * 100000) / 100000);
 }
 
-export function multiply(a:number,b:number){
-  return roundTo5((a*b));
+export function multiply(a: number, b: number) {
+  return roundTo5((a * b));
 }
 
 export const etherScanTx = 'https://etherscan.io/tx/';
 export const arbiScanTx = 'https://arbiscan.io/tx/';
+export const ftmScanTx = 'https://ftmscan.com/tx/'
 
 export const purchase = 'Purchase';
 export const withdraw = 'Withdraw';
 export const deposit = 'Deposit';
 export const exercise = 'Exercise';
 
-export const ethMainnet : string = 'ETH-MAINNET';
+export const ethMainnet: string = 'ETH-MAINNET';
 export const arbiMainnet: string = 'ARBITRUM-MAINNET'
+export const ftmMainnet: string = 'FANTOM-MAINNET';
 export const endpoint = `https://api.telegram.org/bot${envConfig.telegramBotApiKey}/sendMessage?chat_id=${envConfig.telegramChannelName}&text=`
 //export const twitterClient = new TwitterApi(TwitterConfig);
