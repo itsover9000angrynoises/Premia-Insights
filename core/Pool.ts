@@ -210,6 +210,7 @@ export default class eightDecimalPool {
           eventData.type = tokenType === TokenType.LongCall ? `long Call` : tokenType === TokenType.LongPut ? `long Put` : `Not Supported`
           eventData.maturity = new Date(maturity.toNumber() * 1000).toDateString();
           eventData.strikePrice = fixedToNumber(strike64x64);
+          eventData.strikePrice = roundTo5(eventData.strikePrice);
           eventData.contractSize = roundTo5(this.contractDecimalFormat(BigNumber.from(eventData.contractSize)));
           const priceNow = roundTo5((await this.callPrice()));
           const priceSizeNow = multiply(priceNow, eventData.contractSize);
