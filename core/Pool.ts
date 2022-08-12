@@ -1,7 +1,7 @@
 import { fixedToNumber, parseTokenId, TokenType } from "@premia/utils";
 import { envConfig } from "../config/env";
 import { assetDecimals, event, poolPrice } from "../models/models";
-import { arbiColor, arbiMainnet, arbiScanTx, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw, multiply, cache, ftmColor, ftmScanTx } from "../utils/utils";
+import { arbiColor, arbiMainnet, arbiScanTx, deposit, endpoint, ethColor, etherScanTx, ethMainnet, exercise, http, purchase, roundTo5, withdraw, multiply, cache, ftmColor, ftmScanTx, ftmMainnet, optColor, optScanTx } from "../utils/utils";
 import { BigNumber } from "ethers";
 
 export default class eightDecimalPool {
@@ -12,13 +12,13 @@ export default class eightDecimalPool {
   callPrice: Function;
   putPrice: Function;
   callAssetDecimalFormat: Function;
-  putAssetDecimalFormat: Function; 
-  contractDecimalFormat : Function;
-  constructor(name: string, web3PoolInstance: any, network: string, blockHeight, prices: poolPrice, decimals:assetDecimals) {
+  putAssetDecimalFormat: Function;
+  contractDecimalFormat: Function;
+  constructor(name: string, web3PoolInstance: any, network: string, blockHeight: string | undefined, prices: poolPrice, decimals: assetDecimals) {
     this.pair = name;
     this.web3PoolInstance = web3PoolInstance;
     this.network = network;
-    this.blockHeight = blockHeight;
+    this.blockHeight = parseInt(blockHeight as string);
     this.callPrice = prices.callPrice;
     this.putPrice = prices.putPrice;
     this.callAssetDecimalFormat = decimals.callAsset;
@@ -39,7 +39,7 @@ export default class eightDecimalPool {
         value: [],
       },
       fromBlock: this.blockHeight
-    }).on('data', event => {      
+    }).on('data', (event: any) => {
       let eventData: event = {
         txHash: event.transactionHash,
         account: event.returnValues[`0`],
@@ -51,9 +51,9 @@ export default class eightDecimalPool {
       }
       this.sendNotification(purchase, eventData, network);
     })
-      .on('changed', changed => console.log(changed))
-      .on('error', err => console.log(err))
-      .on('connected', str => console.log(str))
+      .on('changed', (changed: any) => console.log(changed))
+      .on('error', (err: any) => console.log(err))
+      .on('connected', (str: any) => console.log(str))
   }
 
   private exercise(web3PoolInstance: any, network: string) {
@@ -62,7 +62,7 @@ export default class eightDecimalPool {
         value: [],
       },
       fromBlock: this.blockHeight
-    }).on('data', event => {
+    }).on('data', (event: any) => {
       let eventData: event = {
         txHash: event.transactionHash,
         user: event.returnValues[`0`],
@@ -73,9 +73,9 @@ export default class eightDecimalPool {
       }
       this.sendNotification(exercise, eventData, network);
     })
-      .on('changed', changed => console.log(changed))
-      .on('error', err => console.log(err))
-      .on('connected', str => console.log(str))
+      .on('changed', (changed: any) => console.log(changed))
+      .on('error', (err: any) => console.log(err))
+      .on('connected', (str: any) => console.log(str))
   }
 
   private deposit(web3PoolInstance: any, network: string) {
@@ -84,7 +84,7 @@ export default class eightDecimalPool {
         value: [],
       },
       fromBlock: this.blockHeight
-    }).on('data', event => {
+    }).on('data', (event: any) => {      
       let eventData: event = {
         txHash: event.transactionHash,
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
@@ -92,9 +92,9 @@ export default class eightDecimalPool {
       }
       this.sendNotification(deposit, eventData, network);
     })
-      .on('changed', changed => console.log(changed))
-      .on('error', err => console.log(err))
-      .on('connected', str => console.log(str))
+      .on('changed', (changed: any) => console.log(changed))
+      .on('error', (err: any) => console.log(err))
+      .on('connected', (str: any) => console.log(str))
   }
 
   private withdraw(web3PoolInstance: any, network: string) {
@@ -103,7 +103,7 @@ export default class eightDecimalPool {
         value: [],
       },
       fromBlock: this.blockHeight
-    }).on('data', event => {
+    }).on('data', (event: any) => {
       let eventData: event = {
         txHash: event.transactionHash,
         type: event.returnValues[`1`] == true ? 'Call' : 'Put',
@@ -111,9 +111,9 @@ export default class eightDecimalPool {
       }
       this.sendNotification(withdraw, eventData, network);
     })
-      .on('changed', changed => console.log(changed))
-      .on('error', err => console.log(err))
-      .on('connected', str => console.log(str))
+      .on('changed', (changed: any) => console.log(changed))
+      .on('error', (err: any) => console.log(err))
+      .on('connected', (str: any) => console.log(str))
   }
 
 
@@ -121,32 +121,32 @@ export default class eightDecimalPool {
     if (cache.get(eventData.txHash) === undefined) {
       cache.set(eventData.txHash, true);
       let content: string;
-      let networkColor = this.network == ethMainnet ? ethColor : this.network == arbiMainnet ? arbiColor : ftmColor;
-      let networkTx = this.network == ethMainnet ? etherScanTx : this.network == arbiMainnet ? arbiScanTx : ftmScanTx;
+      let networkColor = this.network == ethMainnet ? ethColor : this.network == arbiMainnet ? arbiColor : this.network == ftmMainnet ? ftmColor : optColor;
+      let networkTx = this.network == ethMainnet ? etherScanTx : this.network == arbiMainnet ? arbiScanTx : this.network == ftmMainnet ? ftmScanTx : optScanTx;
       try {
         if (actions === deposit) {
           const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
-          let content;
+          let content: string;
           if (unit == this.pair.split("/")[0]) {
             const priceNow = roundTo5(await this.callPrice());
-            const priceAmountNow = multiply(priceNow, eventData.amount);
-            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
+            const priceAmountNow = multiply(priceNow, eventData.amount as number);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice as string)) {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $ :rocket:)`;
             } else {
-              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $)`;
             }
           }
           else {
             const priceNow = roundTo5(await this.putPrice());
-            const priceAmountNow = multiply(priceNow, eventData.amount);
-            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :rocket:)`;
+            const priceAmountNow = multiply(priceNow, eventData.amount as number);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice as string)) {
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $ :rocket:)`;
             } else {
-              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+              content = `${networkColor} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $)`;
             }
           }
           await http.get(
-            `${endpoint}${this.network} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${networkTx}${eventData.txHash}`
+            `${endpoint}${this.network} New Deposit ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} txHash:${networkTx}${eventData.txHash}`
           )
           await http.post(
             envConfig.discordWebHookUrl,
@@ -167,27 +167,27 @@ export default class eightDecimalPool {
         }
         if (actions === withdraw) {
           const unit = eventData.type == 'Call' ? this.pair.split("/")[0] : this.pair.split("/")[1]
-          let content;
+          let content: string;
           if (unit == this.pair.split("/")[0]) {
             const priceNow = roundTo5(await this.callPrice());
-            const priceAmountNow = multiply(priceNow, eventData.amount);
-            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+            const priceAmountNow = multiply(priceNow, eventData.amount as number);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice as string)) {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $ :expressionless:)`;
             } else {
-              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $)`;
             }
           }
           else {
             const priceNow = roundTo5(await this.putPrice());
-            const priceAmountNow = multiply(priceNow, eventData.amount);
-            if (priceAmountNow >= parseInt(envConfig.filterPrice)) {
-              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $ :expressionless:)`;
+            const priceAmountNow = multiply(priceNow, eventData.amount as number);
+            if (priceAmountNow >= parseInt(envConfig.filterPrice as string)) {
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $ :expressionless:)`;
             } else {
-              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} (${priceAmountNow} $)`;
+              content = `${networkColor} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} (${priceAmountNow} $)`;
             }
           }
           await http.get(
-            `${endpoint}${this.network} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount)} ${unit} txHash:${networkTx}${eventData.txHash}`
+            `${endpoint}${this.network} New Withdrawal ${this.pair.split("/")[0]} : ${eventData.type} Pool amount: ${roundTo5(eventData.amount as number)} ${unit} txHash:${networkTx}${eventData.txHash}`
           )
           await http.post(
             envConfig.discordWebHookUrl,
@@ -219,7 +219,7 @@ export default class eightDecimalPool {
           const breakEven = tokenType === TokenType.LongCall ? roundTo5(eventData.strikePrice + (multiply((eventData.baseCost + eventData.feeCost), priceNow) / eventData.contractSize)) : roundTo5(eventData.strikePrice - ((eventData.baseCost + eventData.feeCost) / eventData.contractSize))
           const premiumPriceNow = eventData.type == `long Call` ? multiply(eventData.baseCost, priceNow) : eventData.baseCost;
           const feesPriceNow = eventData.type == `long Call` ? multiply(eventData.feeCost, priceNow) : eventData.feeCost
-          if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
+          if (priceSizeNow >= parseInt(envConfig.filterSizePrice as string)) {
             content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow}$) feesPaid: ${feesPriceNow}$ `;
           } else {
             content = `${networkColor} New Purchase ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) strike: ${eventData.strikePrice} maturity: ${eventData.maturity} breakeven: ${breakEven} premium: ${eventData.baseCost} (${premiumPriceNow} $) feesPaid: ${feesPriceNow}$ `;
@@ -251,9 +251,9 @@ export default class eightDecimalPool {
           eventData.fee = roundTo5(eventData.fee as number) // round off to 5 decimal places
           eventData.exerciseValue = tokenType === TokenType.LongCall ? roundTo5(this.callAssetDecimalFormat(BigNumber.from(eventData.exerciseValue))) : roundTo5(this.putAssetDecimalFormat(BigNumber.from(eventData.exerciseValue)));
           const unit = eventData.type === `long Call` ? this.pair.split("/")[0] : this.pair.split("/")[1]
-          let content;
+          let content: string;
           const priceSizeNow = multiply((await this.callPrice()), <number>eventData.contractSize);
-          if (priceSizeNow >= parseInt(envConfig.filterSizePrice)) {
+          if (priceSizeNow >= parseInt(envConfig.filterSizePrice as string)) {
             content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $ :rocket:) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;
           } else {
             content = `${networkColor} New Exercise ${this.pair} ${eventData.type} size: ${eventData.contractSize} (${priceSizeNow} $) exerciseValue: ${eventData.exerciseValue} fees: ${eventData.fee} ${unit}`;

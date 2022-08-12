@@ -7,7 +7,7 @@ const Cache = require("node-cache");
 
 var rateLimit = require('axios-rate-limit');
 export const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 5000 });
-export const cache = new Cache({ stdTTL: 1500, checkperiod: 750 });
+export const cache = new Cache({ stdTTL: 43200, checkperiod: 43150 });
 
 export const arbiColor = `\`\`\`ini
 [ARBITRUM-MAINNET]
@@ -19,6 +19,10 @@ export const ethColor = `\`\`\`
 
 export const ftmColor = `\`\`\`yaml
 [FANTOM-MAINNET]
+\`\`\``;
+
+export const optColor = `\`\`\`CSS
+[OPTIMISM-MAINNET]
 \`\`\``;
 
 export function bnToNumber(bn: BigNumber) {
@@ -40,7 +44,8 @@ export function multiply(a: number, b: number) {
 
 export const etherScanTx = 'https://etherscan.io/tx/';
 export const arbiScanTx = 'https://arbiscan.io/tx/';
-export const ftmScanTx = 'https://ftmscan.com/tx/'
+export const ftmScanTx = 'https://ftmscan.com/tx/';
+export const optScanTx = 'https://optimistic.etherscan.io/tx/';
 
 export const purchase = 'Purchase';
 export const withdraw = 'Withdraw';
@@ -48,7 +53,8 @@ export const deposit = 'Deposit';
 export const exercise = 'Exercise';
 
 export const ethMainnet: string = 'ETH-MAINNET';
-export const arbiMainnet: string = 'ARBITRUM-MAINNET'
+export const arbiMainnet: string = 'ARBITRUM-MAINNET';
 export const ftmMainnet: string = 'FANTOM-MAINNET';
+export const optMainnet:string = 'OPTIMISM-MAINNET';
 export const endpoint = `https://api.telegram.org/bot${envConfig.telegramBotApiKey}/sendMessage?chat_id=${envConfig.telegramChannelName}&text=`
 //export const twitterClient = new TwitterApi(TwitterConfig);

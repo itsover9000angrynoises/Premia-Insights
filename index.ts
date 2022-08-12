@@ -1,9 +1,9 @@
 var Web3 = require("web3");
-import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, lunadaiAddress, wbtcDaiAddress, wbtcDaiAddressArbi, wbtcUsdcAddressFtm, wethDaiAddress, wethDaiAddressArbi, wethUsdcAddressFtm, wftmUsdcAddressFtm, yfidaiAddress, yfidaiAddressArbi, yfiUsdcAddressFtm } from './config/env';
-import { getAlcxPrice, getDAIPrice, getEthPrice, getFtmPrice, getLinkPrice, getLunaPrice, getUsdcPrice, getWbtcPrice, getYfiPrice } from './core/chainlink-price';
+import { alcxDaiAddress, alethAlusdAddress, diamondProxyABI, envConfig, linkDaiAddress, linkDaiAddressArbi, lunadaiAddress, optUsdcAddressOpt, wbtcDaiAddress, wbtcDaiAddressArbi, wbtcUsdcAddressFtm, wethDaiAddress, wethDaiAddressArbi, wethUsdcAddressFtm, wethUsdcAddressOpt, wftmUsdcAddressFtm, yfidaiAddress, yfidaiAddressArbi, yfiUsdcAddressFtm } from './config/env';
+import { getAlcxPrice, getDAIPrice, getEthPrice, getFtmPrice, getLinkPrice, getLunaPrice, getOPPrice, getUsdcPrice, getWbtcPrice, getYfiPrice } from './core/chainlink-price';
 import Pool from './core/Pool';
-import { arbiContractInstance, ethContractInstance, ftmContractInstance } from './models/models';
-import { arbiMainnet, bnToNumber, bnToNumberBTC, bnToNumberSix, ethMainnet, ftmMainnet } from './utils/utils';
+import { arbiContractInstance, ethContractInstance, ftmContractInstance, optContractInstance } from './models/models';
+import { arbiMainnet, bnToNumber, bnToNumberBTC, bnToNumberSix, ethMainnet, ftmMainnet, optMainnet } from './utils/utils';
 
 
 var getETHProvider = () => {
@@ -21,29 +21,29 @@ var getETHProvider = () => {
     }
   });
   provider.on("connect", () => {
-    console.log("*** WebSocket Connected ***")
+    console.log("*** ETH WebSocket Connected ***")
   })
-  provider.on("error", (e) => {
-    console.log("*** WebSocket Error ***")
+  provider.on("error", (e: any) => {
+    console.log("*** ETH WebSocket Error ***")
     getETHProvider()
   })
-  provider.on("end", (e) => {
-    console.log("*** WebSocket Ended ***")
+  provider.on("end", (e: any) => {
+    console.log("*** ETH WebSocket Ended ***")
     getETHProvider()
   })
-  provider.on("close", (e) => {
-    console.log("*** WebSocket Closed ***")
+  provider.on("close", (e: any) => {
+    console.log("*** ETH WebSocket Closed ***")
     getETHProvider()
   })
-  provider.on("timeout", (e) => {
-    console.log("*** WebSocket Timeout ***")
+  provider.on("timeout", (e: any) => {
+    console.log("*** ETH WebSocket Timeout ***")
     getETHProvider()
   })
-  provider.on("exit", (e) => {
-    console.log("*** WebSocket Exit ***")
+  provider.on("exit", (e: any) => {
+    console.log("*** ETH WebSocket Exit ***")
     getETHProvider()
   })
-  provider.on("ready", (e) => {
+  provider.on("ready", (e: any) => {
     //console.log('*** WebSocket Ready ***')
   })
   return provider
@@ -64,36 +64,36 @@ var getArbiProvider = () => {
     }
   });
   provider.on("connect", () => {
-    console.log("*** WebSocket Connected ***")
+    console.log("*** ARBI WebSocket Connected ***")
   })
-  provider.on("error", (e) => {
-    console.log("*** WebSocket Error ***")
+  provider.on("error", (e: any) => {
+    console.log("*** ARBI WebSocket Error ***")
     getArbiProvider()
   })
-  provider.on("end", (e) => {
-    console.log("*** WebSocket Ended ***")
+  provider.on("end", (e: any) => {
+    console.log("*** ARBI WebSocket Ended ***")
     getArbiProvider()
   })
-  provider.on("close", (e) => {
-    console.log("*** WebSocket Closed ***")
+  provider.on("close", (e: any) => {
+    console.log("*** ARBI WebSocket Closed ***")
     getArbiProvider()
   })
-  provider.on("timeout", (e) => {
-    console.log("*** WebSocket Timeout ***")
+  provider.on("timeout", (e: any) => {
+    console.log("*** ARBI WebSocket Timeout ***")
     getArbiProvider()
   })
-  provider.on("exit", (e) => {
-    console.log("*** WebSocket Exit ***")
+  provider.on("exit", (e: any) => {
+    console.log("*** ARBI WebSocket Exit ***")
     getArbiProvider()
   })
-  provider.on("ready", (e) => {
+  provider.on("ready", (e: any) => {
     //console.log('*** WebSocket Ready ***')
   })
   return provider
 }
 
-var getFtmProvider = () => {
-  const provider = new Web3.providers.WebsocketProvider(envConfig.ftmWSSEndpoint, {
+var getOptProvider = () => {
+  const provider = new Web3.providers.WebsocketProvider(envConfig.optWSSEndpoint, {
     // @ts-ignore
     clientConfig: {
       keepalive: true,
@@ -107,33 +107,76 @@ var getFtmProvider = () => {
     }
   });
   provider.on("connect", () => {
-    console.log("*** WebSocket Connected ***")
+    console.log("*** OPT WebSocket Connected ***")
   })
-  provider.on("error", (e) => {
-    console.log("*** WebSocket Error ***")
-    getFtmProvider()
+  provider.on("error", (e: any) => {
+    console.log("*** OPT WebSocket Error ***")
+    getOptProvider()
   })
-  provider.on("end", (e) => {
-    console.log("*** WebSocket Ended ***")
-    getFtmProvider()
+  provider.on("end", (e: any) => {
+    console.log("*** OPT WebSocket Ended ***")
+    getOptProvider()
   })
-  provider.on("close", (e) => {
-    console.log("*** WebSocket Closed ***")
-    getFtmProvider()
+  provider.on("close", (e: any) => {
+    console.log("*** OPT WebSocket Closed ***")
+    getOptProvider()
   })
-  provider.on("timeout", (e) => {
-    console.log("*** WebSocket Timeout ***")
-    getFtmProvider()
+  provider.on("timeout", (e: any) => {
+    console.log("*** OPT WebSocket Timeout ***")
+    getOptProvider()
   })
-  provider.on("exit", (e) => {
-    console.log("*** WebSocket Exit ***")
-    getFtmProvider()
+  provider.on("exit", (e: any) => {
+    console.log("*** OPT WebSocket Exit ***")
+    getOptProvider()
   })
-  provider.on("ready", (e) => {
+  provider.on("ready", (e: any) => {
     //console.log('*** WebSocket Ready ***')
   })
   return provider
 }
+
+// var getFtmProvider = () => {
+//   const provider = new Web3.providers.WebsocketProvider(envConfig.ftmWSSEndpoint, {
+//     // @ts-ignore
+//     clientConfig: {
+//       keepalive: true,
+//       keepaliveInterval: 60000
+//     },
+//     reconnect: {
+//       auto: true,
+//       delay: 5000,
+//       maxAttempts: 5,
+//       onTimeout: false
+//     }
+//   });
+//   provider.on("connect", () => {
+//     console.log("*** FTM WebSocket Connected ***")
+//   })
+//   provider.on("error", (e: any) => {
+//     console.log("*** FTM WebSocket Error ***")
+//     getFtmProvider()
+//   })
+//   provider.on("end", (e: any) => {
+//     console.log("*** FTM WebSocket Ended ***")
+//     getFtmProvider()
+//   })
+//   provider.on("close", (e: any) => {
+//     console.log("*** FTM WebSocket Closed ***")
+//     getFtmProvider()
+//   })
+//   provider.on("timeout", (e: any) => {
+//     console.log("*** FTM WebSocket Timeout ***")
+//     getFtmProvider()
+//   })
+//   provider.on("exit", (e: any) => {
+//     console.log("*** FTM WebSocket Exit ***")
+//     getFtmProvider()
+//   })
+//   provider.on("ready", (e: any) => {
+//     //console.log('*** WebSocket Ready ***')
+//   })
+//   return provider
+// }
 
 var web3 = new Web3(getETHProvider())
 const ethInstance: ethContractInstance = {
@@ -178,22 +221,33 @@ const arbiInstance: arbiContractInstance = {
   ),
 }
 
-var web3Ftm = new Web3(getFtmProvider())
-const ftmInstance: ftmContractInstance = {
+var web3Opt = new Web3(getOptProvider())
+const optInstance: optContractInstance = {
 
-  wethUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
-    wethUsdcAddressFtm
+  wethUsdc: new web3Opt.eth.Contract(diamondProxyABI,
+    wethUsdcAddressOpt
   ),
-  wbtcUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
-    wbtcUsdcAddressFtm
-  ),
-  wftmUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
-    wftmUsdcAddressFtm
-  ),
-  yfiUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
-    yfiUsdcAddressFtm
-  ),
+  optUsdc: new web3Opt.eth.Contract(diamondProxyABI,
+    optUsdcAddressOpt
+  )
 }
+
+// var web3Ftm = new Web3(getFtmProvider())
+// const ftmInstance: ftmContractInstance = {
+
+//   wethUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
+//     wethUsdcAddressFtm
+//   ),
+//   wbtcUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
+//     wbtcUsdcAddressFtm
+//   ),
+//   wftmUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
+//     wftmUsdcAddressFtm
+//   ),
+//   yfiUsdc: new web3Ftm.eth.Contract(diamondProxyABI,
+//     yfiUsdcAddressFtm
+//   ),
+// }
 
 function start() {
   const wbtcdaieth = new Pool(
@@ -218,16 +272,16 @@ function start() {
   wbtcdaiarbi.start();
   console.log(`----------Started Listing to WBTC/DAI ${arbiMainnet}`);
 
-  const wbtcusdcftm = new Pool(
-    "WBTC/USDC",
-    ftmInstance.wbtcUsdc,
-    ftmMainnet,
-    envConfig.startBlockHeightFtm,
-    { callPrice: getWbtcPrice, putPrice: getUsdcPrice },
-    { callAsset: bnToNumberBTC, putAsset: bnToNumberSix, contract: bnToNumberBTC }
-  );
-  wbtcusdcftm.start();
-  console.log(`----------Started Listing to WBTC/USDC ${ftmMainnet}`);
+  // const wbtcusdcftm = new Pool(
+  //   "WBTC/USDC",
+  //   ftmInstance.wbtcUsdc,
+  //   ftmMainnet,
+  //   envConfig.startBlockHeightFtm,
+  //   { callPrice: getWbtcPrice, putPrice: getUsdcPrice },
+  //   { callAsset: bnToNumberBTC, putAsset: bnToNumberSix, contract: bnToNumberBTC }
+  // );
+  // wbtcusdcftm.start();
+  // console.log(`----------Started Listing to WBTC/USDC ${ftmMainnet}`);
 
   const wethdaieth = new Pool(
     "WETH/DAI",
@@ -251,16 +305,16 @@ function start() {
   wethdaiarbi.start();
   console.log(`----------Started Listing to WETH/DAI ${arbiMainnet}`);
 
-  const wethusdcftm = new Pool(
-    "WETH/USDC",
-    ftmInstance.wethUsdc,
-    ftmMainnet,
-    envConfig.startBlockHeightFtm,
-    { callPrice: getEthPrice, putPrice: getUsdcPrice },
-    { callAsset: bnToNumber, putAsset: bnToNumberSix, contract: bnToNumber },
-  );
-  wethusdcftm.start();
-  console.log(`----------Started Listing to WETH/USDC ${ftmMainnet}`);
+  // const wethusdcftm = new Pool(
+  //   "WETH/USDC",
+  //   ftmInstance.wethUsdc,
+  //   ftmMainnet,
+  //   envConfig.startBlockHeightFtm,
+  //   { callPrice: getEthPrice, putPrice: getUsdcPrice },
+  //   { callAsset: bnToNumber, putAsset: bnToNumberSix, contract: bnToNumber },
+  // );
+  // wethusdcftm.start();
+  // console.log(`----------Started Listing to WETH/USDC ${ftmMainnet}`);
 
   const linkdaieth = new Pool(
     "Link/DAI",
@@ -328,38 +382,60 @@ function start() {
   yfidaiarbi.start();
   console.log(`----------Started Listing to YFI/DAI ${arbiMainnet}`);
 
-  const yfiusdcftm = new Pool(
-    "YFI/USDC",
-    ftmInstance.yfiUsdc,
-    ftmMainnet,
-    envConfig.startBlockHeightFtm,
-    { callPrice: getYfiPrice, putPrice: getUsdcPrice },
-    { callAsset: bnToNumber, putAsset: bnToNumberSix , contract: bnToNumber},
-  );
-  yfiusdcftm.start();
-  console.log(`----------Started Listing to YFI/USDC ${ftmMainnet}`);
+  // const yfiusdcftm = new Pool(
+  //   "YFI/USDC",
+  //   ftmInstance.yfiUsdc,
+  //   ftmMainnet,
+  //   envConfig.startBlockHeightFtm,
+  //   { callPrice: getYfiPrice, putPrice: getUsdcPrice },
+  //   { callAsset: bnToNumber, putAsset: bnToNumberSix , contract: bnToNumber},
+  // );
+  // yfiusdcftm.start();
+  // console.log(`----------Started Listing to YFI/USDC ${ftmMainnet}`);
 
-  const lunadaieth = new Pool(
-    "LUNA/DAI",
-    ethInstance.lunaDai,
-    ethMainnet,
-    envConfig.startBlocKHeightEth,
-    { callPrice: getLunaPrice, putPrice: getDAIPrice },
-    { callAsset: bnToNumber, putAsset: bnToNumber , contract: bnToNumber},
-  );
-  lunadaieth.start();
-  console.log(`----------Started Listing to LUNA/DAI ${ethMainnet}`);
+  // const lunadaieth = new Pool(
+  //   "LUNA/DAI",
+  //   ethInstance.lunaDai,
+  //   ethMainnet,
+  //   envConfig.startBlocKHeightEth,
+  //   { callPrice: getLunaPrice, putPrice: getDAIPrice },
+  //   { callAsset: bnToNumber, putAsset: bnToNumber , contract: bnToNumber},
+  // );
+  // lunadaieth.start();
+  // console.log(`----------Started Listing to LUNA/DAI ${ethMainnet}`);
 
-  const wftmusdcftm = new Pool(
-    "WFTM/USDC",
-    ftmInstance.wftmUsdc,
-    ftmMainnet,
-    envConfig.startBlockHeightFtm,
-    { callPrice: getFtmPrice, putPrice: getUsdcPrice },
-    { callAsset: bnToNumber, putAsset: bnToNumberSix , contract: bnToNumber},
+  // const wftmusdcftm = new Pool(
+  //   "WFTM/USDC",
+  //   ftmInstance.wftmUsdc,
+  //   ftmMainnet,
+  //   envConfig.startBlockHeightFtm,
+  //   { callPrice: getFtmPrice, putPrice: getUsdcPrice },
+  //   { callAsset: bnToNumber, putAsset: bnToNumberSix , contract: bnToNumber},
+  // );
+  // wftmusdcftm.start();
+  // console.log(`----------Started Listing to WFTM/USDC ${ftmMainnet}`);
+
+  const wethusdcopt = new Pool(
+    "WETH/USDC",
+    optInstance.wethUsdc,
+    optMainnet,
+    envConfig.startBlockHeightOpt,
+    { callPrice: getEthPrice, putPrice: getUsdcPrice },
+    { callAsset: bnToNumber, putAsset: bnToNumberSix, contract: bnToNumber },
   );
-  wftmusdcftm.start();
-  console.log(`----------Started Listing to WFTM/USDC ${ftmMainnet}`);
+  wethusdcopt.start();
+  console.log(`----------Started Listing to WETH/USDC ${optMainnet}`);
+
+  const opusdcopt = new Pool(
+    "OP/USDC",
+    optInstance.optUsdc,
+    optMainnet,
+    envConfig.startBlockHeightOpt,
+    { callPrice: getOPPrice, putPrice: getUsdcPrice },
+    { callAsset: bnToNumber, putAsset: bnToNumberSix, contract: bnToNumber },
+  );
+  opusdcopt.start();
+  console.log(`----------Started Listing to OP/USDC ${optMainnet}`);
 
 };
 

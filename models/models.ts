@@ -60,3 +60,8 @@ export type ftmContractInstance = {
   wftmUsdc: any,
   yfiUsdc: any
 }
+
+export type optContractInstance = {
+  wethUsdc: any,
+  optUsdc: any
+}

@@ -166,3 +166,21 @@ export async function getFtmPrice() {
   }
   return myCache.get("ftm");
 }
+
+export async function getOPPrice() {
+  if (myCache.get("op") === undefined) {
+    try {
+      const web3 = new Web3(new Web3.providers.HttpProvider(envConfig.optHttpEndpoint));
+      const ABI = [{ "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint80", "name": "_roundId", "type": "uint80" }], "name": "getRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "latestRoundData", "outputs": [{ "internalType": "uint80", "name": "roundId", "type": "uint80" }, { "internalType": "int256", "name": "answer", "type": "int256" }, { "internalType": "uint256", "name": "startedAt", "type": "uint256" }, { "internalType": "uint256", "name": "updatedAt", "type": "uint256" }, { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }]
+      const opAdrr = "0x0d276fc14719f9292d5c1ea2198673d1f4269246"
+      const priceFeed = new web3.eth.Contract(ABI, opAdrr)
+      const priceData = await priceFeed.methods.latestRoundData().call()
+      const roundOff = await priceFeed.methods.decimals().call();
+      myCache.set("op", Number(formatUnits(priceData.answer, roundOff)));
+      return Number(formatUnits(priceData.answer, roundOff));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return myCache.get("op");
+}
